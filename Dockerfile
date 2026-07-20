@@ -12,7 +12,7 @@ WORKDIR /app
 
 # Install production deps against the lockfile for reproducible builds.
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+RUN npm_config_build_from_source=sqlite3 npm ci --omit=dev
 
 # ---- Runtime ----
 FROM node:24-bookworm-slim AS runtime
