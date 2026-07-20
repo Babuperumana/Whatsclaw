@@ -1,0 +1,32 @@
+# Dependencies (reinstalled inside the image)
+node_modules/
+npm-debug.log*
+
+# Runtime state — must come from the mounted /data volume, never the image
+auth_info_baileys/
+database.sqlite
+database.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+.jwt_secret
+uploads/
+
+# Secrets / local env
+.env
+.env.local
+.env.*.local
+
+# Tooling / editor / VCS
+.git/
+.gitignore
+.claude/
+*.log
+.DS_Store
+Thumbs.db
+
+# Docs & files not needed at runtime
+DEPLOY.md
+
+# Dev/test scripts — not for production (test-api.js also carries a hardcoded token)
+addTestItems.js
+test-api.js

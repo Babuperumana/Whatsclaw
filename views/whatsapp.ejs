@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WhatsApp Connection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #f5f5f9;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .sidebar {
+            min-height: 100vh;
+            background-color: #fff;
+            box-shadow: 0 0.125rem 0.25rem rgba(161, 172, 184, 0.075);
+        }
+
+        .status-card {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 0.25rem 1rem rgba(161, 172, 184, 0.2);
+        }
+
+        .qr-box {
+            width: 300px;
+            height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            background: #fff;
+            margin: 0 auto;
+        }
+
+        .qr-box img {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar p-3">
+                <div class="text-center mb-4 mt-2">
+                    <h5>WhatsApp</h5>
+                </div>
+                <ul class="nav flex-column gap-2">
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/dashboard"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/dashboard/vazhipadu"><i class="bi bi-flower1 me-2"></i> Vazhipadu Master</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/dashboard/specialdays"><i class="bi bi-calendar-event me-2"></i> Special Days</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/dashboard/nakshathrapooja"><i class="bi bi-stars me-2"></i> Nakshathra Poojas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active fw-bold text-primary" href="/dashboard/whatsapp"><i class="bi bi-whatsapp me-2"></i> WhatsApp</a>
+                    </li>
+                    <li class="nav-item mt-4">
+                        <a class="nav-link text-danger" href="/logout"><i class="bi bi-box-arrow-right me-2"></i> Logout</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Main content -->
+            <div class="col-md-10 p-4">
+                <h4 class="mb-4"><i class="bi bi-whatsapp text-success me-2"></i> WhatsApp Connection</h4>
+
+                <div class="card status-card mb-4">
+                    <div class="card-body text-center p-4" id="statusPanel">
+                        <div class="py-5 text-muted">
+                            <div class="spinner-border text-secondary" role="status"></div>
+                            <p class="mt-3 mb-0">Loading connection status…</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messaging panel -->
+                <div class="card status-card" id="sendCard" style="display:none;">
+                    <div class="card-body p-4">
+                        <h5 class="mb-4"><i class="bi bi-send me-2"></i> Send a Message</h5>
+                        <form id="sendForm">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Send to</label>
+                                    <select class="form-select" name="target" id="targetSel">
+                                        <option value="number">A phone number</option>
+                                        <option value="group">A group</option>
+                                        <option value="devotees">All devotees (newsletter)</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-8" id="numberWrap">
+                                    <label class="form-label">Phone number (with country code)</label>
+                                    <input type="text" class="form-control" id="numberInput" placeholder="e.g. 919876543210">
+                                </div>
+
+                                <div class="col-md-8" id="groupWrap" style="display:none;">
+                                    <label class="form-label">Group</label>
+                                    <select class="form-select" id="groupSel">
+                                        <option value="">Loading groups…</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-8" id="devoteeWrap" style="display:none;">
+                                    <label class="form-label">Recipients</label>
+                                    <div class="form-control bg-light" id="devoteeInfo">All devotees</div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mt-1">
+                                <div class="col-md-4">
+                                    <label class="form-label">Message type</label>
+                                    <select class="form-select" name="type" id="typeSel">
+                                        <option value="text">Text</option>
+                                        <option value="image">Image</option>
+                                        <option value="document">Document</option>
+                                        <option value="media">Media (video)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-8" id="fileWrap" style="display:none;">
+                                    <label class="form-label">File</label>
+                                    <input type="file" class="form-control" name="file" id="fileInput">
+                                    <div class="form-text">Max 50 MB.</div>
+                                </div>
+                            </div>
+
+                            <div class="mt-3">
+                                <label class="form-label" id="textLabel">Message text</label>
+                                <textarea class="form-control" name="text" id="textInput" rows="4"
+                                    placeholder="Type your message…"></textarea>
+                            </div>
+
+                            <div class="d-flex gap-2 mt-4 align-items-center">
+                                <button type="submit" class="btn btn-success" id="sendBtn">
+                                    <i class="bi bi-send me-1"></i> Send
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="testBtn">
+                                    <i class="bi bi-person-check me-1"></i> Test to admin
+                                </button>
+                                <span id="sendMsg" class="ms-2"></span>
+                            </div>
+                        </form>
+
+                        <div id="broadcastProgress" class="alert alert-info mt-4" style="display:none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const panel = document.getElementById('statusPanel');
+
+        function escapeHtml(s) {
+            return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        function renderConnected(d) {
+            const name = escapeHtml(d.user && d.user.name);
+            const id = escapeHtml(d.user && d.user.id);
+            const since = d.connectedAt ? new Date(d.connectedAt).toLocaleString() : '';
+            panel.innerHTML = `
+                <div class="py-4">
+                    <div class="mb-3"><i class="bi bi-check-circle-fill text-success" style="font-size:3rem;"></i></div>
+                    <h5 class="text-success">Connected</h5>
+                    <table class="table table-borderless w-auto mx-auto mt-4 text-start">
+                        <tr><th class="pe-4 text-muted">Account</th><td>${name || '<span class="text-muted">—</span>'}</td></tr>
+                        <tr><th class="pe-4 text-muted">Number</th><td>${id ? '+' + id : '—'}</td></tr>
+                        <tr><th class="pe-4 text-muted">Linked since</th><td>${escapeHtml(since)}</td></tr>
+                    </table>
+                    <button class="btn btn-outline-danger mt-3" id="logoutBtn">
+                        <i class="bi bi-box-arrow-right me-1"></i> Unlink this device
+                    </button>
+                </div>`;
+            document.getElementById('logoutBtn').addEventListener('click', unlink);
+        }
+
+        function renderQr(d) {
+            panel.innerHTML = `
+                <div class="py-3">
+                    <h5 class="mb-3">Scan to link WhatsApp</h5>
+                    <p class="text-muted">Open WhatsApp on your phone → <strong>Settings → Linked Devices → Link a Device</strong>, then scan this code.</p>
+                    <div class="qr-box my-3"><img src="${d.qrImage}" alt="WhatsApp QR code"></div>
+                    <p class="text-muted small mb-0">The code refreshes automatically until you link.</p>
+                </div>`;
+        }
+
+        function renderWaiting(d) {
+            const err = d.lastError ? `<p class="text-danger small mt-2">${escapeHtml(d.lastError)}</p>` : '';
+            panel.innerHTML = `
+                <div class="py-5 text-muted">
+                    <div class="spinner-border text-secondary" role="status"></div>
+                    <p class="mt-3 mb-0">Connecting to WhatsApp… waiting for a QR code.</p>
+                    ${err}
+                </div>`;
+        }
+
+        async function unlink() {
+            if (!confirm('Unlink this WhatsApp account? The bot will stop until a new device is linked.')) return;
+            const btn = document.getElementById('logoutBtn');
+            if (btn) { btn.disabled = true; btn.textContent = 'Unlinking…'; }
+            try {
+                const r = await fetch('/dashboard/whatsapp/logout', { method: 'POST' });
+                const j = await r.json();
+                if (!j.ok) alert('Failed to unlink: ' + (j.error || 'unknown error'));
+            } catch (e) {
+                alert('Failed to unlink: ' + e.message);
+            }
+            poll();
+        }
+
+        const sendCard = document.getElementById('sendCard');
+        let groupsLoaded = false;
+
+        async function poll() {
+            try {
+                const r = await fetch('/dashboard/whatsapp/status', { headers: { 'Accept': 'application/json' } });
+                const d = await r.json();
+                if (d.connected) renderConnected(d);
+                else if (d.qrImage) renderQr(d);
+                else renderWaiting(d);
+
+                // Messaging panel is only usable while connected.
+                sendCard.style.display = d.connected ? 'block' : 'none';
+                if (d.connected) {
+                    document.getElementById('devoteeInfo').textContent =
+                        'All devotees (' + (d.devoteeCount || 0) + ')';
+                    if (!groupsLoaded) loadGroups();
+                }
+            } catch (e) {
+                panel.innerHTML = '<div class="py-5 text-danger">Could not load status. Retrying…</div>';
+            }
+        }
+
+        // --- Messaging panel ---
+        const targetSel = document.getElementById('targetSel');
+        const typeSel = document.getElementById('typeSel');
+        const numberWrap = document.getElementById('numberWrap');
+        const groupWrap = document.getElementById('groupWrap');
+        const devoteeWrap = document.getElementById('devoteeWrap');
+        const fileWrap = document.getElementById('fileWrap');
+        const textLabel = document.getElementById('textLabel');
+        const textInput = document.getElementById('textInput');
+        const sendMsg = document.getElementById('sendMsg');
+        const bcastBox = document.getElementById('broadcastProgress');
+
+        function refreshTargetFields() {
+            const t = targetSel.value;
+            numberWrap.style.display = t === 'number' ? 'block' : 'none';
+            groupWrap.style.display = t === 'group' ? 'block' : 'none';
+            devoteeWrap.style.display = t === 'devotees' ? 'block' : 'none';
+        }
+
+        function refreshTypeFields() {
+            const isText = typeSel.value === 'text';
+            fileWrap.style.display = isText ? 'none' : 'block';
+            textLabel.textContent = isText ? 'Message text' : 'Caption (optional)';
+        }
+
+        targetSel.addEventListener('change', refreshTargetFields);
+        typeSel.addEventListener('change', refreshTypeFields);
+        refreshTargetFields();
+        refreshTypeFields();
+
+        async function loadGroups() {
+            groupsLoaded = true;
+            try {
+                const r = await fetch('/dashboard/whatsapp/groups');
+                const j = await r.json();
+                const sel = document.getElementById('groupSel');
+                if (j.ok && j.groups.length) {
+                    sel.innerHTML = j.groups
+                        .map(g => `<option value="${escapeHtml(g.id)}">${escapeHtml(g.subject || g.id)}</option>`)
+                        .join('');
+                } else {
+                    sel.innerHTML = '<option value="">No groups found</option>';
+                }
+            } catch (e) {
+                groupsLoaded = false; // allow retry on next poll
+            }
+        }
+
+        function buildFormData(overrideTarget) {
+            const fd = new FormData();
+            const target = overrideTarget || targetSel.value;
+            fd.append('target', target);
+            fd.append('type', typeSel.value);
+            fd.append('text', textInput.value);
+            fd.append('caption', textInput.value);
+            if (target === 'number') fd.append('to', document.getElementById('numberInput').value);
+            if (target === 'group') fd.append('to', document.getElementById('groupSel').value);
+            const file = document.getElementById('fileInput').files[0];
+            if (file) fd.append('file', file);
+            return fd;
+        }
+
+        async function submitSend(fd, btn) {
+            sendMsg.textContent = '';
+            btn.disabled = true;
+            const orig = btn.innerHTML;
+            btn.innerHTML = 'Sending…';
+            try {
+                const r = await fetch('/dashboard/whatsapp/send', { method: 'POST', body: fd });
+                const j = await r.json();
+                if (!j.ok) {
+                    sendMsg.innerHTML = '<span class="text-danger">' + escapeHtml(j.error) + '</span>';
+                } else if (j.broadcast) {
+                    const mins = Math.ceil((j.total * (j.delayMs / 1000)) / 60);
+                    sendMsg.innerHTML = '<span class="text-success">Broadcast started.</span>';
+                    bcastBox.style.display = 'block';
+                    bcastBox.textContent = 'Broadcasting to ' + j.total + ' devotees (~' + mins + ' min)…';
+                    pollBroadcast();
+                } else {
+                    sendMsg.innerHTML = '<span class="text-success">Sent ✓</span>';
+                }
+            } catch (e) {
+                sendMsg.innerHTML = '<span class="text-danger">' + escapeHtml(e.message) + '</span>';
+            }
+            btn.disabled = false;
+            btn.innerHTML = orig;
+        }
+
+        document.getElementById('sendForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (targetSel.value === 'devotees') {
+                if (!confirm('Send this message to ALL devotees? With a 15s gap between each, this can take a while and cannot be undone.')) return;
+            }
+            submitSend(buildFormData(), document.getElementById('sendBtn'));
+        });
+
+        document.getElementById('testBtn').addEventListener('click', () => {
+            submitSend(buildFormData('test'), document.getElementById('testBtn'));
+        });
+
+        async function pollBroadcast() {
+            try {
+                const r = await fetch('/dashboard/whatsapp/broadcast-status');
+                const s = await r.json();
+                let line = 'Sent ' + s.sent + ' of ' + s.total + (s.failed ? (', ' + s.failed + ' failed') : '');
+                if (s.running) {
+                    bcastBox.className = 'alert alert-info mt-4';
+                    bcastBox.textContent = line + '…';
+                    setTimeout(pollBroadcast, 3000);
+                } else {
+                    bcastBox.className = 'alert alert-success mt-4';
+                    bcastBox.textContent = 'Broadcast complete. ' + line + '.';
+                }
+            } catch (e) {
+                setTimeout(pollBroadcast, 5000);
+            }
+        }
+
+        poll();
+        setInterval(poll, 3000);
+    </script>
+</body>
+
+</html>

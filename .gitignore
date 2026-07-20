@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+.jwt_secret
+
+# WhatsApp (Baileys) auth/session state — contains login credentials
+auth_info_baileys/
+
+# Temp store for files sent from the WhatsApp panel (auto-deleted after send)
+uploads/
+
+# Local database (contains PII: PAN, Aadhaar, emails, mobiles)
+database.sqlite
+database.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db

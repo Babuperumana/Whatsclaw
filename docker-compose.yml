@@ -1,0 +1,28 @@
+# Local testing convenience. Coolify does NOT need this file — it builds from the
+# Dockerfile directly. Use this to run the container locally the same way it runs
+# in production (single /data volume for all persistent state).
+#
+#   JWT_SECRET=$(openssl rand -hex 48) docker compose up --build
+#   docker compose logs -f        # watch for the WhatsApp QR code
+#
+services:
+  app:
+    build: .
+    image: temple-upi-gateway
+    ports:
+      - "3001:3001"
+    environment:
+      DATA_DIR: /data
+      PORT: 3001
+      # Set NODE_ENV=production only when serving over HTTPS (secure cookies).
+      # Left as development here so login works over plain http://localhost.
+      NODE_ENV: development
+      # Provide a strong secret; falls back to an auto-generated one in /data.
+      JWT_SECRET: ${JWT_SECRET:-}
+    volumes:
+      # All persistent state (SQLite DB, WhatsApp session, JWT secret).
+      - temple_data:/data
+    restart: unless-stopped
+
+volumes:
+  temple_data:

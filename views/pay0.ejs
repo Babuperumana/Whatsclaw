@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Pay0 • UPI Checkout</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{background:#eef2f5;font-family:'Poppins',sans-serif;display:flex;justify-content:center;padding:20px}
+    .container{background:#fff;max-width:380px;width:100%;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.1);overflow:hidden}
+    .header{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+    .merchant{font-size:18px;font-weight:600}.amount{font-size:20px;font-weight:700}
+    .section{padding:20px;text-align:center}.divider{height:1px;background:#f0f0f0}
+    .qr img{width:220px;height:220px;border-radius:8px;margin-bottom:12px;object-fit:cover}
+    .timer{font-size:14px;color:#555;display:flex;justify-content:center;align-items:center;gap:8px}
+    .spinner{width:16px;height:16px;border:2px solid #ddd;border-top-color:#764ba2;border-radius:50%;animation:spin 1s linear infinite}
+    .copy-group{display:flex;margin-bottom:8px}
+    .copy-group input{flex:1;padding:10px 12px;border:1px solid #ccc;border-right:none;border-radius:6px 0 0 6px;font-size:14px}
+    .copy-group button{padding:0 16px;background:#764ba2;color:#fff;border:none;cursor:pointer;border-radius:0 6px 6px 0}
+    .copy-group button:hover{opacity:0.9}
+    .note{font-size:12px;color:#e67e22;margin-bottom:12px}
+    .manual input,.manual button{width:100%;padding:12px;font-size:14px;margin-bottom:12px}
+    .manual input{border:1px solid #ccc;border-radius:6px}
+    .manual button{background:#667eea;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:16px}
+    .manual button:hover{opacity:0.9}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    #toast{position:fixed;bottom:60px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:#fff;padding:8px 14px;border-radius:4px;opacity:0;pointer-events:none;transition:opacity .3s;font-size:14px}
+    #toast.show{opacity:1}
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="merchant">BharatPe</div>
+    <div class="amount">₹<%= new_amount %></div>
+  </div>
+
+  <div class="section">
+    <h2>Scan &amp; Pay</h2>
+    <div class="qr"><img src="<%= qr_url %>" alt="QR Code"/></div>
+    <div class="timer">
+      <span>Time left:</span>
+      <span id="timer">--:--</span>
+      <div class="spinner"></div>
+    </div>
+  </div>
+  <div class="divider"></div>
+
+  <div class="section">
+    <h2>Manual Pay</h2>
+    <div class="copy-group">
+      <input id="upiId" type="text" readonly value="<%= upi_id %>"/>
+      <button id="copyBtn">Copy</button>
+    </div>
+    <div class="note">Do not reuse—amount changes every time.</div>
+    <div class="manual">
+      <input id="utrInput" type="text" placeholder="Enter UTR / Ref No."/>
+      <button id="submitBtn">Submit UTR</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast">Copied!</div>
+
+<script>
+  // Countdown timer
+  let secs = <%= Math.max(0, secs) %>, timerEl = document.getElementById('timer');
+  function updateTimer() {
+    const m = String(Math.floor(secs/60)).padStart(2,'0'),
+          s = String(secs%60).padStart(2,'0');
+    timerEl.textContent = `${m}:${s}`;
+  }
+  updateTimer();
+  setInterval(() => {
+    if (secs <= 0) return timerEl.textContent = '00:00';
+    secs--; updateTimer();
+  }, 1000);
+
+  // Copy UPI
+  document.getElementById('copyBtn').onclick = () => {
+    navigator.clipboard.writeText(document.getElementById('upiId').value)
+      .then(() => {
+        const t = document.getElementById('toast');
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 1500);
+      });
+  };
+
+  // UTR submit stub
+  document.getElementById('submitBtn').onclick = () => {
+    const u = document.getElementById('utrInput').value.trim();
+    if (!u) return alert('Please enter your UTR.');
+    alert(`UTR submitted: ${u}`);
+  };
+
+  // Poll status API and redirect
+  const orderId = "<%- order_id %>";
+  const redirectUrl = "<%- redirect_url %>";
+  const poll = setInterval(() => {
+    fetch('/payment4/status.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ order_id: orderId })
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (d.status === 'SUCCESS' || d.status === 'FAILURE') {
+        clearInterval(poll);
+        Swal.fire({
+          icon: d.status === 'SUCCESS' ? 'success' : 'error',
+          title: d.status === 'SUCCESS' ? 'Payment Successful' : 'Payment Failed',
+          text:  d.status === 'SUCCESS'
+                   ? 'Your payment is complete!'
+                   : 'Time up—please start again.',
+          confirmButtonText: 'OK'
+        }).then(() => window.location.href = redirectUrl);
+      }
+    })
+    .catch(console.error);
+  }, 5000);
+</script>
+</body>
+</html>
