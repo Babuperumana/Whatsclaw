@@ -104,17 +104,29 @@ function buildPanchangamMessage(isoDate, language) {
     lines.push(t_('date_label', { gregorian, weekday: dayName }));
     lines.push(t_('malayalam_label', { month: malMonth, day: malDay, year: malYear }));
 
-    // Nakshathram line, with optional "less" indicator.
+    // --- Detailed 24-hour Nakshatram breakdown ---
+    lines.push(t_('nakshathram_section'));
+    if (pan.nakshatramDetails && pan.nakshatramDetails.length > 0) {
+        for (const seg of pan.nakshatramDetails) {
+            const segName = pickLangValue(seg.nakshatram, lang);
+            const start = seg.start || '';
+            const end = seg.end || '';
+            lines.push(t_('nakshathram_segment', { name: segName, start, end }));
+        }
+    } else {
+        lines.push(t_('nakshathram_label', { nak: nak || 'N/A' }));
+    }
+    lines.push('');
+
+    // --- Today's / Tomorrow's primary Nakshatram ---
+    lines.push(t_('nakshathram_today_label'));
     if (pan.isNakshatramLess && pan.nakshatramDetails && pan.nakshatramDetails.length >= 2) {
-        // Two-day span: first entry is the star from yesterday, last entry is
-        // today's star. Show the spanning stars so the admin knows the bridge.
         const prevNak = pickLangValue(pan.nakshatramDetails[0].nakshatram, lang);
         const nextNak = pickLangValue(pan.nakshatramDetails[pan.nakshatramDetails.length - 1].nakshatram, lang);
-        lines.push(t_('nakshathram_less_label'));
         lines.push(t_('nakshathram_less_desc'));
         lines.push(t_('nakshathram_span_label', { prev: prevNak, next: nextNak }));
     } else {
-        lines.push(t_('nakshathram_label', { nak }));
+        lines.push(t_('nakshathram_simple_label', { nak: nak || 'N/A' }));
     }
 
     lines.push(t_('tithi_label', { tithi, paksha }));
