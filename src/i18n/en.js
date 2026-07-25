@@ -171,9 +171,11 @@ module.exports = {
     reminders: {
         // Sent the evening before (tomorrow's poojas/vazhipadus).
         vazhipadu_tomorrow: '🌺 *Vazhipadu Reminder* 🌺\n\nDear {name}, your *{vazhipadu}* offering (for {devotee}, {nak}) is scheduled to be performed *tomorrow* ({date}) at Kaippulli Temple.\n\nMay God bless you! 🙏',
+        vazhipadu_tomorrow_multi: '🌺 *Vazhipadu Reminder* 🌺\n\nDear {name}, you have {count} offerings scheduled to be performed *tomorrow* ({date}) at Kaippulli Temple:\n\n{items}\n\nMay God bless you! 🙏',
         nakshathra_tomorrow: '🕉️ *Nakshathra Pooja Reminder* 🕉️\n\nDear {name}, your nakshathra pooja for *{nak}* is scheduled to be performed *tomorrow* ({date}) at Kaippulli Temple.\n\nMay God bless you! 🙏',
         // Sent the same morning (today's poojas/vazhipadus, as a completed confirmation).
         vazhipadu_today: '🌺 *Vazhipadu Performed* 🌺\n\nDear {name}, your *{vazhipadu}* offering (for {devotee}, {nak}) is being performed *today* ({date}) at Kaippulli Temple.\n\nMay God bless you! 🙏',
+        vazhipadu_today_multi: '🌺 *Vazhipadu Performed* 🌺\n\nDear {name}, your {count} offerings are being performed *today* ({date}) at Kaippulli Temple:\n\n{items}\n\nMay God bless you! 🙏',
         nakshathra_today: '🕉️ *Nakshathra Pooja Performed* 🕉️\n\nDear {name}, your nakshathra pooja for *{nak}* is being performed *today* ({date}) at Kaippulli Temple.\n\nMay God bless you! 🙏'
     },
 

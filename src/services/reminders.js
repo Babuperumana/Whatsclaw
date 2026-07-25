@@ -198,20 +198,31 @@ function createReminderService(rawDb, { sendMessage, isConnected }) {
         const total = vazhipadus.length + nakshathras.length;
         console.log(`[reminders] ${slot} for ${dateLabel}: ${vazhipadus.length} vazhipadu + ${nakshathras.length} nakshathra`);
 
-        // Vazhipadu reminders.
-        for (let i = 0; i < vazhipadus.length; i++) {
+        // Vazhipadu reminders – group by phone so one message per person covers all their vazhipadus.
+        const groups = new Map();
+        for (const b of vazhipadus) {
+            if (!groups.has(b.phone_number)) groups.set(b.phone_number, []);
+            groups.get(b.phone_number).push(b);
+        }
+        let sentCount = 0;
+        for (const [phone, items] of groups) {
             if (!isConnected()) { console.warn('[reminders] connection lost mid-run; stopping'); break; }
-            const b = vazhipadus[i];
-            const lang = langFor(langMap, b.phone_number);
-            const text = t(lang, vKey, {
-                name: b.devotee_name || '',
-                vazhipadu: b.vazhipadu_name || '',
-                devotee: b.devotee_name || '',
-                nak: b.nakshathram || '',
-                date: dateLabel
-            });
-            if (await send(b.phone_number, text)) sent++;
-            if (i < total - 1) await sleep(REMINDER_DELAY_MS);
+            const lang = langFor(langMap, phone);
+            const name = (items[0].devotee_name || '').trim() || 'Devotee';
+            if (items.length === 1) {
+                const b = items[0];
+                const text = t(lang, vKey, {
+                    name, vazhipadu: b.vazhipadu_name || '', devotee: b.devotee_name || '',
+                    nak: b.nakshathram || '', date: dateLabel
+                });
+                if (await send(phone, text)) sentCount++;
+            } else {
+                const itemLines = items.map(b => `• ${b.vazhipadu_name} — ${b.devotee_name} (${b.nakshathram || '—'})`).join('\n');
+                const multiKey = isEvening ? 'reminders.vazhipadu_tomorrow_multi' : 'reminders.vazhipadu_today_multi';
+                const text = t(lang, multiKey, { name, count: items.length, items: itemLines, date: dateLabel });
+                if (await send(phone, text)) sentCount++;
+            }
+            if (sentCount < groups.size) await sleep(REMINDER_DELAY_MS);
         }
 
         // Nakshathra pooja reminders.
@@ -224,13 +235,13 @@ function createReminderService(rawDb, { sendMessage, isConnected }) {
                 nak: r.nakshathram || '',
                 date: dateLabel
             });
-            if (await send(r.whatsapp_number, text)) sent++;
+            if (await send(r.whatsapp_number, text)) sentCount++;
             if (i < nakshathras.length - 1) await sleep(REMINDER_DELAY_MS);
         }
 
         await db.setXbyY('UPDATE reminder_runs SET sent_count = ? WHERE slot = ? AND run_date = ?',
-            [sent, slot, runDate]);
-        console.log(`[reminders] ${slot} for ${dateLabel} done: ${sent}/${total} sent`);
+            [sentCount, slot, runDate]);
+        console.log(`[reminders] ${slot} for ${dateLabel} done: ${sentCount}/${total} sent`);
     }
 
     // Fired every minute: decide whether either slot is due now (IST).
