@@ -157,6 +157,19 @@
                         <div id="broadcastProgress" class="alert alert-info mt-4" style="display:none;"></div>
                     </div>
                 </div>
+
+                <!-- Joined Groups -->
+                <div class="card status-card mt-4">
+                    <div class="card-body p-4">
+                        <h5 class="mb-3"><i class="bi bi-people me-2"></i> Joined Groups</h5>
+                        <div id="groupsPanel">
+                            <div class="py-4 text-muted text-center">
+                                <div class="spinner-border text-secondary" role="status"></div>
+                                <p class="mt-2 mb-0">Loading groups…</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -241,6 +254,7 @@
                     document.getElementById('devoteeInfo').textContent =
                         'All devotees (' + (d.devoteeCount || 0) + ')';
                     if (!groupsLoaded) loadGroups();
+                    loadGroupsList();
                 }
             } catch (e) {
                 panel.innerHTML = '<div class="py-5 text-danger">Could not load status. Retrying…</div>';
@@ -292,6 +306,26 @@
                 }
             } catch (e) {
                 groupsLoaded = false; // allow retry on next poll
+            }
+        }
+
+        async function loadGroupsList() {
+            const panel = document.getElementById('groupsPanel');
+            try {
+                const r = await fetch('/dashboard/whatsapp/groups');
+                const j = await r.json();
+                if (j.ok && j.groups.length) {
+                    panel.innerHTML = '<div class="table-responsive"><table class="table table-sm align-middle">'
+                        + '<thead><tr><th>#</th><th>Group Name</th><th>Group ID</th></tr></thead><tbody>'
+                        + j.groups.map((g, i) =>
+                            `<tr><td>${i + 1}</td><td>${escapeHtml(g.subject || '<span class="text-muted">Unnamed</span>')}</td><td><code>${escapeHtml(g.id)}</code></td></tr>`
+                        ).join('')
+                        + '</tbody></table></div>';
+                } else {
+                    panel.innerHTML = '<p class="text-muted mb-0">No groups joined yet.</p>';
+                }
+            } catch (e) {
+                panel.innerHTML = '<p class="text-danger mb-0">Failed to load groups.</p>';
             }
         }
 
