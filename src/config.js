@@ -1,7 +1,7 @@
 // Shared bot configuration and conversation states.
 
-// Admin number to receive booking/donation notifications
-const ADMIN_NOTIFY_JID = '918907959595@s.whatsapp.net';
+// Admin group to receive booking/donation notifications
+const ADMIN_NOTIFY_JID = '120363431348193440@g.us';
 
 // Temple location, sent to devotees as a native WhatsApp map pin.
 const TEMPLE_LOCATION = {
