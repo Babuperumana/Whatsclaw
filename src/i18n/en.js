@@ -136,7 +136,7 @@ module.exports = {
         generating_qr: 'Generating UPI QR Code... Please wait.',
         receipt_paid: '✅ *Payment Successful & Booking Confirmed!* ✅\n\n*Order ID:* {order_id}\n',
         receipt_counter: '✅ *Booking Saved (Pay at Counter)* ✅\n\n*Order ID:* {order_id}\nPlease show this message at the temple counter to pay ₹{total}.\n',
-        receipt_line: '- {name} for {devotee} on {date}',
+        receipt_line: '- {name} for {devotee} ({nak}) on {date}',
         receipt_thanks: '\nThank you for your offering. May God bless you! 🙏'
     },
 

@@ -325,7 +325,7 @@ module.exports = {
                         let admin = adminMsg('vazhipadu_paid_header', { order_id, phone: userPhone, name: pushName || 'N/A', total: session.totalAmount });
                         for (let b of session.bookings) {
                             await setXbyY(`INSERT INTO vazhipadu_bookings (order_id, phone_number, vazhipadu_name, devotee_name, nakshathram, performing_date, amount, payment_mode, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'UPI', 'CONFIRMED')`, [order_id, userPhone, b.name, b.devoteeName, b.nakshathram, b.date, b.price]);
-                            receipt += t(lang, 'vazhipadu.receipt_line', { name: b.name, devotee: b.devoteeName, date: b.date }) + '\n';
+                            receipt += t(lang, 'vazhipadu.receipt_line', { name: b.name, devotee: b.devoteeName, nak: b.nakshathram, date: b.date }) + '\n';
                             admin += adminMsg('vazhipadu_line', { name: b.name, devotee: b.devoteeName, nak: b.nakshathram, date: b.date, price: b.price });
                         }
                         receipt += t(lang, 'vazhipadu.receipt_thanks');
@@ -339,7 +339,7 @@ module.exports = {
                     let admin = adminMsg('vazhipadu_counter_header', { order_id, phone: userPhone, name: pushName || 'N/A', total: session.totalAmount });
                     for (let b of session.bookings) {
                         await setXbyY(`INSERT INTO vazhipadu_bookings (order_id, phone_number, vazhipadu_name, devotee_name, nakshathram, performing_date, amount, payment_mode, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'COUNTER', 'PENDING')`, [order_id, userPhone, b.name, b.devoteeName, b.nakshathram, b.date, b.price]);
-                        receipt += t(lang, 'vazhipadu.receipt_line', { name: b.name, devotee: b.devoteeName, date: b.date }) + '\n';
+                        receipt += t(lang, 'vazhipadu.receipt_line', { name: b.name, devotee: b.devoteeName, nak: b.nakshathram, date: b.date }) + '\n';
                         admin += adminMsg('vazhipadu_line', { name: b.name, devotee: b.devoteeName, nak: b.nakshathram, date: b.date, price: b.price });
                     }
                     await sock.sendMessage(jid, { text: receipt });

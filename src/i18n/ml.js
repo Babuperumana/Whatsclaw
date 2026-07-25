@@ -132,7 +132,7 @@ module.exports = {
         generating_qr: 'UPI QR കോഡ് ഉണ്ടാക്കുന്നു... ദയവായി കാത്തിരിക്കുക.',
         receipt_paid: '✅ *പേയ്‌മെന്റ് വിജയകരം & ബുക്കിംഗ് സ്ഥിരീകരിച്ചു!* ✅\n\n*ഓർഡർ ഐഡി:* {order_id}\n',
         receipt_counter: '✅ *ബുക്കിംഗ് സ്വീകരിച്ചു (കൗണ്ടറിൽ അടയ്ക്കുക)* ✅\n\n*ഓർഡർ ഐഡി:* {order_id}\n₹{total} അടയ്ക്കാൻ ഈ സന്ദേശം ക്ഷേത്ര കൗണ്ടറിൽ കാണിക്കുക.\n',
-        receipt_line: '- {name} ({devotee}) - {date}',
+        receipt_line: '- {name} ({devotee}) - {nak} - {date}',
         receipt_thanks: '\nനിങ്ങളുടെ വഴിപാടിന് നന്ദി. ഈശ്വരാനുഗ്രഹം ഉണ്ടാകട്ടെ! 🙏'
     },
 
