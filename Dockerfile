@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ---- Builder: compile native deps (sqlite3, Baileys) ----
-FROM node:24-bookworm-slim AS builder
+FROM node:22-bookworm-slim AS builder
 
 # Toolchain needed for node-gyp native builds.
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -16,7 +16,7 @@ ARG DEPLOY_CACHEBUST=2026-07-25-2
 RUN npm_config_build_from_source=sqlite3 npm ci --omit=dev
 
 # ---- Runtime ----
-FROM node:24-bookworm-slim AS runtime
+FROM node:22-bookworm-slim AS runtime
 
 ENV NODE_ENV=production \
     PORT=3001 \
