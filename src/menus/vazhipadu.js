@@ -7,6 +7,7 @@
 const { STATES } = require('../config');
 const { t } = require('../i18n');
 const { adminMsg } = require('../i18n/admin');
+const { generateOrderId } = require('../utils/orderId');
 
 // panchangam.js pulls in a native calendar engine (./panchang-engine). If that
 // engine isn't installed yet we don't want the whole bot to fail to boot, so we
@@ -232,7 +233,7 @@ module.exports = {
     // Step handler, routed by session.state.
     async handle(ctx) {
         const { sock, jid, text, session, userPhone, pushName, db, payment, notify } = ctx;
-        const { setXbyY } = db;
+        const { getXbyY, setXbyY } = db;
         const lang = session.language;
 
         switch (session.state) {
@@ -319,8 +320,9 @@ module.exports = {
             case STATES.VAZHIPADU_PAYMENT_MODE: {
                 const mode = text.toUpperCase();
                 if (mode === 'PAY_UPI' || text === '1') {
+                    const order_id = await generateOrderId('V', getXbyY);
                     await sock.sendMessage(jid, { text: t(lang, 'vazhipadu.generating_qr') });
-                    payment.generateUPIPayment(jid, session.totalAmount, sock, 'VAZHIPADU', async (order_id) => {
+                    payment.generateUPIPayment(jid, session.totalAmount, sock, order_id, async (order_id) => {
                         let receipt = t(lang, 'vazhipadu.receipt_paid', { order_id });
                         let admin = adminMsg('vazhipadu_paid_header', { order_id, phone: userPhone, name: pushName || 'N/A', total: session.totalAmount });
                         for (let b of session.bookings) {
@@ -334,7 +336,7 @@ module.exports = {
                         session.state = STATES.IDLE;
                     }, lang);
                 } else if (mode === 'PAY_COUNTER' || text === '2') {
-                    let order_id = `COUNTER_${Date.now()}`;
+                    const order_id = await generateOrderId('V', getXbyY);
                     let receipt = t(lang, 'vazhipadu.receipt_counter', { order_id, total: session.totalAmount });
                     let admin = adminMsg('vazhipadu_counter_header', { order_id, phone: userPhone, name: pushName || 'N/A', total: session.totalAmount });
                     for (let b of session.bookings) {

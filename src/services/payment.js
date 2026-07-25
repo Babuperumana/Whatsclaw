@@ -6,9 +6,8 @@ const qrcode = require('qrcode');
 const { t } = require('../i18n');
 
 function createPayment({ getXbyY, setXbyY }) {
-    // `language` is the devotee's chosen language (name or code); it defaults to
-    // English via the i18n fallback when omitted.
-    async function generateUPIPayment(jid, amount, sock, order_id_prefix, callbackSuccess, language) {
+    // Caller provides the order_id so it can be a short sequential ID (V###### / D######).
+    async function generateUPIPayment(jid, amount, sock, order_id, callbackSuccess, language) {
         try {
             const adminUsers = await getXbyY('SELECT user_token, id FROM users WHERE role = "Admin" LIMIT 1');
             if (adminUsers.length === 0) return sock.sendMessage(jid, { text: t(language, 'payment.admin_error') });
@@ -18,7 +17,6 @@ function createPayment({ getXbyY, setXbyY }) {
             const bharatpe_tokens = await getXbyY('SELECT Upiid, merchantId FROM bharatpe_tokens WHERE user_token = ?', [user_token]);
             const upi_id = bharatpe_tokens.length > 0 ? bharatpe_tokens[0].Upiid : 'admin@upi';
 
-            const order_id = `${order_id_prefix}_${Date.now()}`;
             const pay_token = crypto.randomBytes(4).toString('hex');
             const session_amount = parseFloat(amount).toFixed(2);
 

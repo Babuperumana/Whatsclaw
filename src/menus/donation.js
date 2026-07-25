@@ -4,6 +4,7 @@
 const { STATES } = require('../config');
 const { t } = require('../i18n');
 const { adminMsg } = require('../i18n/admin');
+const { generateOrderId } = require('../utils/orderId');
 
 // Donation purposes. `id` is the button id; `name` is the canonical value
 // stored in the DB and sent to the admin (kept in English for consistency);
@@ -63,7 +64,7 @@ module.exports = {
     // Step handler, routed by session.state.
     async handle(ctx) {
         const { sock, jid, text, session, userPhone, pushName, db, payment, notify } = ctx;
-        const { setXbyY } = db;
+        const { getXbyY, setXbyY } = db;
         const lang = session.language;
 
         switch (session.state) {
@@ -94,8 +95,9 @@ module.exports = {
                 const mode = text.toUpperCase();
                 const purposeDisplay = purposeLabel(lang, session.donationPurpose);
                 if (mode === 'PAY_UPI' || text === '1') {
+                    const order_id = await generateOrderId('D', getXbyY);
                     await sock.sendMessage(jid, { text: t(lang, 'donation.generating_qr') });
-                    payment.generateUPIPayment(jid, session.donationAmount, sock, 'DONATION', async (order_id) => {
+                    payment.generateUPIPayment(jid, session.donationAmount, sock, order_id, async (order_id) => {
                         await setXbyY(`INSERT INTO donations_payment_details (order_id, phone_number, whatsapp_name, amount, purpose, payment_mode, status) VALUES (?, ?, ?, ?, ?, 'UPI', 'CONFIRMED')`, [order_id, userPhone, pushName, session.donationAmount, session.donationPurpose]);
                         const receipt = t(lang, 'donation.receipt_paid', { order_id, purpose: purposeDisplay, amount: session.donationAmount });
                         await sock.sendMessage(jid, { text: receipt });
@@ -103,7 +105,7 @@ module.exports = {
                         session.state = STATES.IDLE;
                     }, lang);
                 } else if (mode === 'PAY_COUNTER' || text === '2') {
-                    const order_id = `COUNTER_DON_${Date.now()}`;
+                    const order_id = await generateOrderId('D', getXbyY);
                     await setXbyY(`INSERT INTO donations_payment_details (order_id, phone_number, whatsapp_name, amount, purpose, payment_mode, status) VALUES (?, ?, ?, ?, ?, 'COUNTER', 'PENDING')`, [order_id, userPhone, pushName, session.donationAmount, session.donationPurpose]);
                     const receipt = t(lang, 'donation.receipt_counter', { order_id, purpose: purposeDisplay, amount: session.donationAmount });
                     await sock.sendMessage(jid, { text: receipt });
