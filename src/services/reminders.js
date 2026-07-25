@@ -169,7 +169,7 @@ function createReminderService(rawDb, { sendMessage, isConnected }) {
 
         // --- Admin Panchangam: send tomorrow's full report to the admin ---
         if (slot === 'panchangam') {
-            const msg = buildPanchangamMessage(tomorrowIso(), 'English');
+            const msg = buildPanchangamMessage(tomorrowIso(), 'Malayalam');
             const adminJid = ADMIN_NOTIFY_JID;
             try {
                 await sendMessage(adminJid, { type: 'text', text: msg.text });

@@ -10,8 +10,15 @@ const { t } = require('../i18n');
 const LAT = 11.074462304803008;
 const LNG = 76.28244022235538;
 
-// Human-readable weekday names (English) used in the report.
+// Human-readable weekday names.
 const WEEKDAY_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const WEEKDAY_ML = ['ഞായറ്', 'തിങ്കൾ', 'ചൊവ്വ', 'ബുധൻ', 'വ്യാഴം', 'വെള്ളി', 'ശനി'];
+
+function pickLangValue(obj, lang) {
+    if (!obj) return null;
+    if (lang === 'Malayalam') return obj.ml || obj.en;
+    return obj.en || obj.ml || null;
+}
 
 /**
  * Returns tomorrow's ISO date string (YYYY-MM-DD), computed in IST.
@@ -38,7 +45,8 @@ function buildPanchangamMessage(isoDate, language) {
     const t_ = (key, params) => t(lang, `admin_panchangam.${key}`, params);
 
     const date = new Date(isoDate + 'T12:00:00');
-    const dayName = WEEKDAY_EN[date.getDay()];
+    const isML = lang === 'Malayalam';
+    const dayName = isML ? (WEEKDAY_ML[date.getDay()] || WEEKDAY_EN[date.getDay()]) : WEEKDAY_EN[date.getDay()];
 
     // Try the Panchangam engine; if it fails we send a simplified report.
     let pan;
@@ -65,11 +73,11 @@ function buildPanchangamMessage(isoDate, language) {
     const [y, m, d] = isoDate.split('-');
     const gregorian = `${d}/${m}/${y}`;
 
-    const nak = pan.nakshathram ? (pan.nakshathram.en || pan.nakshathram.ml || 'N/A') : 'N/A';
+    const nak = pickLangValue(pan.nakshathram, lang);
     const tithi = pan.tithi ? (pan.tithi.name || 'N/A') : 'N/A';
     const paksha = pan.tithi && pan.tithi.paksha ? pan.tithi.paksha : '';
-    const yoga = pan.yoga ? (pan.yoga.en || pan.yoga.ml || 'N/A') : 'N/A';
-    const karana = pan.karana ? (pan.karana.en || pan.karana.ml || 'N/A') : 'N/A';
+    const yoga = pickLangValue(pan.yoga, lang);
+    const karana = pickLangValue(pan.karana, lang);
     const sunrise = pan.sunrise || 'N/A';
     const sunset = pan.sunset || 'N/A';
 
@@ -100,9 +108,8 @@ function buildPanchangamMessage(isoDate, language) {
     if (pan.isNakshatramLess && pan.nakshatramDetails && pan.nakshatramDetails.length >= 2) {
         // Two-day span: first entry is the star from yesterday, last entry is
         // today's star. Show the spanning stars so the admin knows the bridge.
-        const prevNak = pan.nakshatramDetails[0].nakshatram.en || pan.nakshatramDetails[0].nakshatram.ml;
-        const nextNak = pan.nakshatramDetails[pan.nakshatramDetails.length - 1].nakshatram.en
-            || pan.nakshatramDetails[pan.nakshatramDetails.length - 1].nakshatram.ml;
+        const prevNak = pickLangValue(pan.nakshatramDetails[0].nakshatram, lang);
+        const nextNak = pickLangValue(pan.nakshatramDetails[pan.nakshatramDetails.length - 1].nakshatram, lang);
         lines.push(t_('nakshathram_less_label'));
         lines.push(t_('nakshathram_less_desc'));
         lines.push(t_('nakshathram_span_label', { prev: prevNak, next: nextNak }));
