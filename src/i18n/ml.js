@@ -111,6 +111,7 @@ module.exports = {
         date_button: 'തീയ്യതി തിരഞ്ഞെടുക്കുക',
         date_section: 'തീയതികൾ ({from}-{to})',
         date_no_info: 'വിവരം ലഭ്യമല്ല',
+        date_nak_less: 'നക്ഷത്രം ഇല്ല',
         invalid_date: 'തെറ്റായ തീയതി. ലിസ്റ്റിൽ നിന്ന് ഒരു തീയതി തിരഞ്ഞെടുക്കുക.',
         add_more_text: 'വഴിപാട് ചേർത്തു! മറ്റൊരു ഇനം ബുക്ക് ചെയ്യണോ?',
         add_more_yes: '➕ അടുത്ത വഴിപാട്',
@@ -148,6 +149,26 @@ module.exports = {
         nakshathra_tomorrow: '🕉️ *ജന്മനക്ഷത്ര പൂജ ഓർമ്മപ്പെടുത്തൽ* 🕉️\n\nപ്രിയ {name}, *{nak}* നക്ഷത്രത്തിനുള്ള താങ്കളുടെ ജന്മനക്ഷത്ര പൂജ *നാളെ* ({date}) കൈപ്പുള്ളി ക്ഷേത്രത്തിൽ നടത്തപ്പെടും.\n\nഈശ്വരൻ അനുഗ്രഹിക്കട്ടെ! 🙏',
         vazhipadu_today: '🌺 *വഴിപാട് പൂർത്തിയായി* 🌺\n\nപ്രിയ {name}, താങ്കളുടെ *{vazhipadu}* വഴിപാട് ({devotee}, {nak}) *ഇന്ന്* ({date}) കൈപ്പുള്ളി ക്ഷേത്രത്തിൽ പൂർത്തിയായി.\n\nഈശ്വരൻ അനുഗ്രഹിക്കട്ടെ! 🙏',
         nakshathra_today: '🕉️ *ജന്മനക്ഷത്ര പൂജ പൂർത്തിയായി* 🕉️\n\nപ്രിയ {name}, *{nak}* നക്ഷത്രത്തിനുള്ള താങ്കളുടെ ജന്മനക്ഷത്ര പൂജ *ഇന്ന്* ({date}) കൈപ്പുള്ളി ക്ഷേത്രത്തിൽ പൂർത്തിയായി.\n\nഈശ്വരൻ അനുഗ്രഹിക്കട്ടെ! 🙏'
+    },
+
+    admin_panchangam: {
+        header: '📅 *നാളെയുള്ള പഞ്ചാങ്ഗം* 📅',
+        date_label: '📆 തീയതി: {gregorian} ({weekday})',
+        malayalam_label: '🪔 മലയാളം: {month} {day}, {year}',
+        nakshathram_label: '⭐ നക്ഷത്രം: {nak}',
+        nakshathram_less_label: '⚠️ *നക്ഷത്രം ഇല്ലാത്ത ദിവസം*',
+        nakshathram_less_desc: '   നാളെയും അടുത്ത ദിവസവും ഒരേ നക്ഷത്രം ആയതിനാൽ നാളെ നക്ഷത്രം ഇല്ല.',
+        nakshathram_span_label: '   സുതാര്യം: {prev} → {next}',
+        tithi_label: '🌙 തിഥി: {tithi} ({paksha})',
+        yoga_label: '🧘 യോഗം: {yoga}',
+        karana_label: '🔁 കരണം: {karana}',
+        sunrise_label: '🌅 സൂര്യോദയം: {time}',
+        sunset_label: '🌇 സൂര്യാസ്തമയം: {time}',
+        rahukalam_label: '⚠️ രാഹുകാലം: {time}',
+        yamagandam_label: '⚠️ യമഗണ്ഡം: {time}',
+        gulika_label: '⚠️ ഗുലിക: {time}',
+        vishesham_label: '🎉 പ്രത്യേകം: {events}',
+        footer: '\n🙏 എല്ലാവരുടെക്കുള്ള അനുഗ്രഹം! 🙏'
     },
 
     donation: {

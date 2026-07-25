@@ -111,6 +111,7 @@ module.exports = {
         date_button: 'तिथियाँ देखें',
         date_section: 'तिथियाँ ({from}-{to})',
         date_no_info: 'जानकारी उपलब्ध नहीं',
+        date_nak_less: 'नया नक्षत्र नहीं',
         invalid_date: 'अमान्य तिथि। कृपया सूची से एक तिथि चुनें।',
         add_more_text: 'वझिपाडु जोड़ा गया! क्या आप एक और बुक करना चाहते हैं?',
         add_more_yes: '➕ एक और जोड़ें',
@@ -141,6 +142,26 @@ module.exports = {
         too_many: 'एक साथ बहुत सारे भुगतान। कृपया एक मिनट बाद फिर से प्रयास करें।',
         admin_error: 'सिस्टम त्रुटि: एडमिन कॉन्फ़िगर नहीं किया गया।',
         generate_error: 'भुगतान बनाने में त्रुटि। कृपया बाद में फिर से प्रयास करें।'
+    },
+
+    admin_panchangam: {
+        header: '📅 *कल का पञ्चाङ्ग* 📅',
+        date_label: '📆 तिथि: {gregorian} ({weekday})',
+        malayalam_label: '🪔 मलयालम: {month} {day}, {year}',
+        nakshathram_label: '⭐ नक्षत्र: {nak}',
+        nakshathram_less_label: '⚠️ *नक्षत्र रहित दिन*',
+        nakshathram_less_desc: '   कल और परसों का एक ही नक्षत्र है, इसलिए कल कोई नया नक्षत्र नहीं उगता।',
+        nakshathram_span_label: '   सूत्र: {prev} → {next}',
+        tithi_label: '🌙 तिथि: {tithi} ({paksha})',
+        yoga_label: '🧘 योग: {yoga}',
+        karana_label: '🔁 करण: {karana}',
+        sunrise_label: '🌅 सूर्योदय: {time}',
+        sunset_label: '🌇 सूर्यास्त: {time}',
+        rahukalam_label: '⚠️ राहुकाल: {time}',
+        yamagandam_label: '⚠️ यमघंटक: {time}',
+        gulika_label: '⚠️ गुलिक: {time}',
+        vishesham_label: '🎉 विशेष: {events}',
+        footer: '\n🙏 सभी का आशीर्वाद बने! 🙏'
     },
 
     reminders: {

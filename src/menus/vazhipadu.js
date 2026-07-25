@@ -111,7 +111,7 @@ async function sendDateList(ctx) {
     today.setHours(12, 0, 0, 0);
 
     const rows = [];
-    const dateMeta = {}; // isoDate -> { nakMl, weekdayMl } for later lookup
+    const dateMeta = {}; // isoDate -> { nakMl, weekdayMl, isNakLess } for later lookup
     for (let i = 0; i < DATE_COUNT; i++) {
         const d = new Date(today);
         d.setDate(today.getDate() + i);
@@ -119,19 +119,22 @@ async function sendDateList(ctx) {
 
         let nakMl = '';
         let weekdayMl = '';
+        let isNakLess = false;
         const p = getPanchangam();
         if (p) {
             try {
                 const info = p.getPanchangam(iso);
                 nakMl = info.nakshathram?.ml || '';
                 weekdayMl = info.weekday?.ml || '';
+                isNakLess = !!info.isNakshatramLess;
             } catch (e) {
                 console.error('Panchangam lookup failed for', iso, e.message);
             }
         }
 
-        dateMeta[iso] = { nakMl, weekdayMl };
-        const desc = [weekdayMl, nakMl].filter(Boolean).join(' · ') || t(lang, 'vazhipadu.date_no_info');
+        dateMeta[iso] = { nakMl, weekdayMl, isNakLess };
+        const nakLabel = isNakLess ? t(lang, 'vazhipadu.date_nak_less') : nakMl;
+        const desc = [weekdayMl, nakLabel].filter(Boolean).join(' · ') || t(lang, 'vazhipadu.date_no_info');
         rows.push({ title: formatDMY(iso), rowId: `D_${iso}`, description: desc.slice(0, 72) });
     }
     session.dateMeta = dateMeta;

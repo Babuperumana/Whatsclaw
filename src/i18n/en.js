@@ -115,6 +115,7 @@ module.exports = {
         date_button: 'View Dates',
         date_section: 'Dates ({from}-{to})',
         date_no_info: 'Info unavailable',
+        date_nak_less: 'No new star',
         invalid_date: 'Invalid date. Please pick a date from the list.',
         add_more_text: 'Vazhipadu added! Do you want to book another item?',
         add_more_yes: '➕ Add another',
@@ -145,6 +146,26 @@ module.exports = {
         too_many: 'Too many concurrent payments. Please try again in a minute.',
         admin_error: 'System Error: Admin not configured.',
         generate_error: 'Error generating payment. Please try again later.'
+    },
+
+    admin_panchangam: {
+        header: '📅 *Tomorrow\'s Panchangam* 📅',
+        date_label: '📆 Date: {gregorian} ({weekday})',
+        malayalam_label: '🪔 Malayalam: {month} {day}, {year}',
+        nakshathram_label: '⭐ Nakshathram: {nak}',
+        nakshathram_less_label: '⚠️ *Nakshathram-less Day*',
+        nakshathram_less_desc: '   Tomorrow and the day after share the same nakshathram, so no new star rises tomorrow.',
+        nakshathram_span_label: '   Spanning: {prev} → {next}',
+        tithi_label: '🌙 Tithi: {tithi} ({paksha})',
+        yoga_label: '🧘 Yoga: {yoga}',
+        karana_label: '🔁 Karana: {karana}',
+        sunrise_label: '🌅 Sunrise: {time}',
+        sunset_label: '🌇 Sunset: {time}',
+        rahukalam_label: '⚠️ Rahukalam: {time}',
+        yamagandam_label: '⚠️ Yamagandam: {time}',
+        gulika_label: '⚠️ Gulika: {time}',
+        vishesham_label: '🎉 Special: {events}',
+        footer: '\n🙏 May God bless all! 🙏'
     },
 
     reminders: {

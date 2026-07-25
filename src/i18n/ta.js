@@ -111,6 +111,7 @@ module.exports = {
         date_button: 'தேதிகளைக் காண்க',
         date_section: 'தேதிகள் ({from}-{to})',
         date_no_info: 'தகவல் இல்லை',
+        date_nak_less: 'புதிய நட்சத்திரம் இல்லை',
         invalid_date: 'தவறான தேதி. பட்டியலில் இருந்து ஒரு தேதியைத் தேர்வுசெய்யவும்.',
         add_more_text: 'வழிபாடு சேர்க்கப்பட்டது! மற்றொன்றைப் பதிவு செய்ய விரும்புகிறீர்களா?',
         add_more_yes: '➕ மற்றொன்றைச் சேர்க்கவும்',
@@ -141,6 +142,26 @@ module.exports = {
         too_many: 'ஒரே நேரத்தில் அதிக பணப்பரிவர்த்தனைகள். ஒரு நிமிடம் கழித்து மீண்டும் முயற்சிக்கவும்.',
         admin_error: 'கணினி பிழை: நிர்வாகி அமைக்கப்படவில்லை.',
         generate_error: 'பணப்பரிவர்த்தனை உருவாக்குவதில் பிழை. பிறகு மீண்டும் முயற்சிக்கவும்.'
+    },
+
+    admin_panchangam: {
+        header: '📅 *நாளைய பஞ்சாங்கம்* 📅',
+        date_label: '📆 தேதி: {gregorian} ({weekday})',
+        malayalam_label: '🪔 மலையாளம்: {month} {day}, {year}',
+        nakshathram_label: '⭐ நட்சத்திரம்: {nak}',
+        nakshathram_less_label: '⚠️ *நட்சத்திரமில்லாத நாள்*',
+        nakshathram_less_desc: '   நாளையும் மறைநாளும் ஒரே நட்சத்திரம் ஆகையால், நாளை புதிய நட்சத்திரம் உதியாது.',
+        nakshathram_span_label: '   தொடர்ச்சி: {prev} → {next}',
+        tithi_label: '🌙 திதி: {tithi} ({paksha})',
+        yoga_label: '🧘 யோகம்: {yoga}',
+        karana_label: '🔁 கரணம்: {karana}',
+        sunrise_label: '🌅 சூரிய உதயம்: {time}',
+        sunset_label: '🌇 சூரிய அஸ்தமனம்: {time}',
+        rahukalam_label: '⚠️ ராகுகாலம்: {time}',
+        yamagandam_label: '⚠️ யமகண்டம்: {time}',
+        gulika_label: '⚠️ குலிகை: {time}',
+        vishesham_label: '🎉 சிறப்பு: {events}',
+        footer: '\n🙏 எல்லாருக்கும் ஆசீர்வாதம்! 🙏'
     },
 
     reminders: {

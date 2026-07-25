@@ -5,6 +5,8 @@
 //     • monthly nakshathra poojas whose next occurrence falls tomorrow
 //   Morning (default 08:30 IST): confirm TODAY's poojas are being performed —
 //     the same two sources, matched to today.
+//   Admin Panchangam (default 16:50 IST): send tomorrow's full Panchangam
+//     report to the temple admin WhatsApp number.
 //
 // Vazhipadu and nakshathra reminders are sent as SEPARATE messages, each in the
 // devotee's stored language (falling back to English).
@@ -16,6 +18,8 @@
 
 const { createDb } = require('./db');
 const { t } = require('../i18n');
+const { ADMIN_NOTIFY_JID } = require('../config');
+const { buildPanchangamMessage, tomorrowIso } = require('./adminPanchangam');
 
 const TZ = 'Asia/Kolkata';
 
@@ -24,6 +28,12 @@ const EVENING_HOUR = parseInt(process.env.REMINDER_EVENING_HOUR || '17', 10);   
 const EVENING_MIN = parseInt(process.env.REMINDER_EVENING_MIN || '0', 10);
 const MORNING_HOUR = parseInt(process.env.REMINDER_MORNING_HOUR || '8', 10);    // 8:30 AM
 const MORNING_MIN = parseInt(process.env.REMINDER_MORNING_MIN || '30', 10);
+
+// Admin Panchangam: sends tomorrow's full Panchangam to the temple admin
+// every day at 16:50 IST (4:50 PM). Uses the native Panchangam engine
+// (myassets/js/panchangam) for accurate astronomical data.
+const PANCHANGAM_HOUR = parseInt(process.env.PANCHANGAM_HOUR || '16', 10);
+const PANCHANGAM_MIN = parseInt(process.env.PANCHANGAM_MIN || '50', 10);
 
 // Delay between individual sends, to avoid WhatsApp flagging the number for spam.
 const REMINDER_DELAY_MS = parseInt(process.env.REMINDER_DELAY_MS || '5000', 10);
@@ -141,7 +151,7 @@ function createReminderService(rawDb, { sendMessage, isConnected }) {
         }
     }
 
-    // Run a slot: 'evening' (tomorrow) or 'morning' (today).
+    // Run a slot: 'evening' (tomorrow), 'morning' (today), or 'panchangam'.
     async function runSlot(slot, runDateObj) {
         // Idempotency guard: claim the (slot, run_date) row first. If it already
         // exists, another run (or a pre-restart run) already handled this batch.
@@ -154,6 +164,21 @@ function createReminderService(rawDb, { sendMessage, isConnected }) {
 
         if (!isConnected()) {
             console.warn(`[reminders] ${slot} slot due but WhatsApp not connected; skipping ${runDate}`);
+            return;
+        }
+
+        // --- Admin Panchangam: send tomorrow's full report to the admin ---
+        if (slot === 'panchangam') {
+            const msg = buildPanchangamMessage(tomorrowIso(), 'English');
+            const adminJid = ADMIN_NOTIFY_JID;
+            try {
+                await sendMessage(adminJid, { type: 'text', text: msg.text });
+                await db.setXbyY('UPDATE reminder_runs SET sent_count = 1 WHERE slot = ? AND run_date = ?',
+                    [slot, runDate]);
+                console.log(`[reminders] panchangam sent to admin for tomorrow`);
+            } catch (e) {
+                console.error('[reminders] panchangam send failed:', e.message);
+            }
             return;
         }
 
@@ -218,6 +243,7 @@ function createReminderService(rawDb, { sendMessage, isConnected }) {
             const mins = now.getHours() * 60 + now.getMinutes();
             const eveningMins = EVENING_HOUR * 60 + EVENING_MIN;
             const morningMins = MORNING_HOUR * 60 + MORNING_MIN;
+            const panchangamMins = PANCHANGAM_HOUR * 60 + PANCHANGAM_MIN;
 
             // '>=' (not '==') so a slightly late boot still catches the day's batch;
             // the reminder_runs guard keeps it to one send per slot per day.
@@ -226,6 +252,9 @@ function createReminderService(rawDb, { sendMessage, isConnected }) {
             }
             if (mins >= eveningMins) {
                 await runSlot('evening', now);
+            }
+            if (mins >= panchangamMins) {
+                await runSlot('panchangam', now);
             }
         } catch (e) {
             console.error('[reminders] tick error:', e.message);
@@ -270,7 +299,7 @@ function startReminderScheduler(rawDb, deps) {
         service.tick();                              // run once at boot
         setInterval(() => service.tick(), CHECK_INTERVAL_MS);
         const hh = (h, m) => `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-        console.log(`[reminders] scheduler started (evening ${hh(EVENING_HOUR, EVENING_MIN)} IST, morning ${hh(MORNING_HOUR, MORNING_MIN)} IST)`);
+        console.log(`[reminders] scheduler started (morning ${hh(MORNING_HOUR, MORNING_MIN)}, evening ${hh(EVENING_HOUR, EVENING_MIN)}, panchangam ${hh(PANCHANGAM_HOUR, PANCHANGAM_MIN)} IST)`);
     });
     return service;
 }
