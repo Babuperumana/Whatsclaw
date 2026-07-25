@@ -93,7 +93,7 @@ function buildPanchangamMessage(isoDate, language) {
 
     // Malayalam date.
     const malMonth = pan.kollavarsham
-        ? (pan.kollavarsham.month || pan.kollavarsham.monthMl || 'N/A')
+        ? (isML ? (pan.kollavarsham.monthMl || pan.kollavarsham.month || 'N/A') : (pan.kollavarsham.month || pan.kollavarsham.monthMl || 'N/A'))
         : 'N/A';
     const malDay = pan.kollavarsham && pan.kollavarsham.day ? pan.kollavarsham.day : 'N/A';
     const malYear = pan.kollavarsham && pan.kollavarsham.year ? pan.kollavarsham.year : 'N/A';
