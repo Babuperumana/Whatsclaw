@@ -25,20 +25,16 @@ router.use(requireAuth);
 
 function buildDateFilter(params) {
     const { from_date, to_date, period } = params;
-    if (from_date && to_date) {
-        return { from: from_date, to: to_date, label: `${from_date} → ${to_date}` };
-    }
     if (period) {
         const now = new Date();
         const to = now.toISOString().split('T')[0];
         let from;
-        let d;
         switch (period) {
             case 'today':
                 from = to;
                 break;
             case 'week':
-                d = new Date(now);
+                const d = new Date(now);
                 d.setDate(d.getDate() - 6);
                 from = d.toISOString().split('T')[0];
                 break;
@@ -55,6 +51,9 @@ function buildDateFilter(params) {
         }
         const labels = { today: 'Today', week: 'Last 7 Days', month: 'This Month', '30days': 'Last 30 Days' };
         return { from, to, label: labels[period] || period };
+    }
+    if (from_date && to_date) {
+        return { from: from_date, to: to_date, label: `${from_date} → ${to_date}` };
     }
     const now = new Date();
     const to = now.toISOString().split('T')[0];

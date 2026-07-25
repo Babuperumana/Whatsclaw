@@ -99,7 +99,7 @@
                     <form method="GET" action="/dashboard/transactions" class="row g-3 align-items-end">
                         <div class="col-md-3">
                             <label class="form-label">Quick Select</label>
-                            <select name="period" class="form-select" onchange="this.form.submit()">
+                            <select name="period" class="form-select" id="periodSelect" onchange="if(this.value){this.form.querySelector('[name=from_date]').value='';this.form.querySelector('[name=to_date]').value='';}this.form.submit()">
                                 <option value="">-- Custom Range --</option>
                                 <option value="today" <%= (period === 'today' || (!from_date && !to_date && !period)) ? 'selected' : '' %>>Today</option>
                                 <option value="week" <%= period === 'week' ? 'selected' : '' %>>Last 7 Days</option>
@@ -181,7 +181,7 @@
                                                 <td><span class="text-primary fw-bold"><%= order.order_id %></span></td>
                                                 <td>₹ <%= order.amount %></td>
                                                 <td><%= order.payer_name || '-' %></td>
-                                                <td><%= order.payer_handle ? '<span class="badge bg-light text-dark border">' + order.payer_handle + '</span>' : '-' %></td>
+                                                <td><%- order.payer_handle ? '<span class="badge bg-light text-dark border">' + order.payer_handle + '</span>' : '-' %></td>
                                                 <td>
                                                     <% if (order.status === 'SUCCESS') { %>
                                                         <span class="badge bg-success">SUCCESS</span>
