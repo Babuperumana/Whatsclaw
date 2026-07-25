@@ -336,7 +336,7 @@ module.exports = {
                         session.state = STATES.IDLE;
                     }, lang);
                 } else if (mode === 'PAY_COUNTER' || text === '2') {
-                    const order_id = await generateOrderId('V', getXbyY);
+                    const order_id = await generateOrderId('CV', getXbyY);
                     let receipt = t(lang, 'vazhipadu.receipt_counter', { order_id, total: session.totalAmount });
                     let admin = adminMsg('vazhipadu_counter_header', { order_id, phone: userPhone, name: pushName || 'N/A', total: session.totalAmount });
                     for (let b of session.bookings) {
