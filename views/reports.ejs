@@ -401,8 +401,9 @@
                         <div class="text-center">
                             <span class="summary-label">Overall Collection (Period: <%= dateFilter.label %>)</span>
                             <div class="summary-value text-success" style="font-size: 2rem;">
-                                ₹ <%= ((ordersTotals.success_amount || 0) + (vazhiTotals.total_amount || 0) + (donTotals.total_amount || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2}) %>
+                                ₹ <%= (ordersTotals.success_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %>
                             </div>
+                            <small class="text-muted">From <%= ordersTotals.success_count || 0 %> successful transactions</small>
                         </div>
                     </div>
                 </div>

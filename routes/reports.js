@@ -197,14 +197,14 @@ function buildCSV(ordersData, vazhipaduData, donationsData, dateFilter) {
     lines.push(`Confirmed Amount (Rs),${donationsData.totals.confirmed_amount || 0}`);
     lines.push('');
 
-    const grandTotal = (ordersData.totals.total_amount || 0) + (vazhipaduData.totals.total_amount || 0) + (donationsData.totals.total_amount || 0);
+    const grandTotal = ordersData.totals.success_amount || 0;
     lines.push('=== GRAND TOTAL ===');
     lines.push(`Period: ${dateFilter.label}`);
     lines.push('');
     lines.push('Category,Count,Total Amount (Rs)');
     lines.push(`Transactions (SUCCESS),${ordersData.totals.success_count || 0},${ordersData.totals.success_amount || 0}`);
-    lines.push(`Vazhipadu,${vazhipaduData.totals.total_count || 0},${vazhipaduData.totals.total_amount || 0}`);
-    lines.push(`Donations,${donationsData.totals.total_count || 0},${donationsData.totals.total_amount || 0}`);
+    lines.push(`Vazhipadu (incl. in orders),${vazhipaduData.totals.total_count || 0},—`);
+    lines.push(`Donations (incl. in orders),${donationsData.totals.total_count || 0},—`);
     lines.push('');
     lines.push(`GRAND TOTAL (Rs),,${grandTotal}`);
 
