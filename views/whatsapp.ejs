@@ -316,9 +316,9 @@
                 const j = await r.json();
                 if (j.ok && j.groups.length) {
                     panel.innerHTML = '<div class="table-responsive"><table class="table table-sm align-middle">'
-                        + '<thead><tr><th>#</th><th>Group ID</th></tr></thead><tbody>'
+                        + '<thead><tr><th>#</th><th>Group Name</th><th>Group ID</th></tr></thead><tbody>'
                         + j.groups.map((g, i) =>
-                            `<tr><td>${i + 1}</td><td><code>${escapeHtml(g.id)}</code></td></tr>`
+                            `<tr><td>${i + 1}</td><td>${escapeHtml(g.subject || '<span class="text-muted">Unnamed</span>')}</td><td><code>${escapeHtml(g.id)}</code></td></tr>`
                         ).join('')
                         + '</tbody></table></div>';
                 } else {
