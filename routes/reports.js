@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const path = require('path');
 const { requireAuth } = require('../middleware/auth');
 
 // Helpers to wrap SQLite queries in Promises
@@ -57,18 +56,26 @@ function buildDateFilter(params) {
         const labels = { today: 'Today', week: 'Last 7 Days', month: 'This Month', '30days': 'Last 30 Days' };
         return { from, to, label: labels[period] || period };
     }
-    // Default: last 30 days
     const now = new Date();
     const to = now.toISOString().split('T')[0];
     const from = new Date(now.getTime() - 29 * 86400000).toISOString().split('T')[0];
     return { from, to, label: 'Last 30 Days' };
 }
 
-async function fetchOrders(db, user_id, dateFilter) {
-    let query = `SELECT * FROM orders WHERE user_id = ? AND date(create_date) >= ? AND date(create_date) <= ? ORDER BY create_date DESC`;
-    let rows = await getXbyY(db, query, [user_id, dateFilter.from, dateFilter.to]);
+function csvEscape(val) {
+    if (val === null || val === undefined) return '';
+    const s = String(val);
+    if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+        return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+}
 
-    // Compute totals
+async function fetchOrders(db, user_id, dateFilter) {
+    let rows = await getXbyY(db,
+        `SELECT * FROM orders WHERE user_id = ? AND date(create_date) >= ? AND date(create_date) <= ? ORDER BY create_date DESC`,
+        [user_id, dateFilter.from, dateFilter.to]
+    );
     const totals = await getXbyYOne(db,
         `SELECT
             COUNT(*) as total_count,
@@ -82,7 +89,6 @@ async function fetchOrders(db, user_id, dateFilter) {
         FROM orders WHERE user_id = ? AND date(create_date) >= ? AND date(create_date) <= ?`,
         [user_id, dateFilter.from, dateFilter.to]
     );
-
     return { rows, totals: totals || {} };
 }
 
@@ -124,102 +130,86 @@ async function fetchDonations(db, dateFilter) {
     return { rows, totals: totals || {} };
 }
 
-function buildWorkbook(ordersData, vazhipaduData, donationsData, dateFilter, XLSX) {
-    const wb = XLSX.utils.book_new();
+function buildCSV(ordersData, vazhipaduData, donationsData, dateFilter) {
+    const lines = [];
 
-    // --- Orders Sheet ---
-    const orderHeaders = ['Order ID', 'Amount (₹)', 'Payer Name', 'Payment App', 'Status', 'UTR', 'Create Date'];
-    const orderRows = [
-        ['--- TRANSACTIONS ---'],
-        [`Period: ${dateFilter.label} (${dateFilter.from} to ${dateFilter.to})`, '', '', '', '', '', ''],
-        [''],
-        orderHeaders,
-        ...ordersData.rows.map(o => [
-            o.order_id,
-            o.amount,
-            o.payer_name || '',
-            o.payer_handle || '',
-            o.status || '',
-            o.utr || '',
-            o.create_date || ''
-        ]),
-        [''],
-        ['--- SUMMARY ---', '', '', '', '', '', ''],
-        ['Total Orders', ordersData.totals.total_count || 0, '', '', '', '', ''],
-        ['SUCCESS', ordersData.totals.success_count || 0, '', '', '', '', ''],
-        ['PENDING', ordersData.totals.pending_count || 0, '', '', '', '', ''],
-        ['FAILURE', ordersData.totals.failure_count || 0, '', '', '', '', ''],
-        ['SUCCESS Amount (₹)', ordersData.totals.success_amount || 0, '', '', '', '', ''],
-        ['Total Amount (₹)', ordersData.totals.total_amount || 0, '', '', '', '', ''],
-    ];
-    const orderSheet = XLSX.utils.aoa_to_sheet(orderRows);
-    orderSheet['!cols'] = [15, 12, 20, 15, 12, 15, 18];
-    XLSX.utils.book_append_sheet(wb, orderSheet, 'Transactions');
+    lines.push('=== TRANSACTIONS ===');
+    lines.push(`Period: ${dateFilter.label} (${dateFilter.from} to ${dateFilter.to})`);
+    lines.push('');
+    lines.push('Order ID,Amount (Rs),Payer Name,Payment App,Status,UTR,Create Date');
+    ordersData.rows.forEach(o => {
+        lines.push([
+            csvEscape(o.order_id),
+            csvEscape(o.amount),
+            csvEscape(o.payer_name),
+            csvEscape(o.payer_handle),
+            csvEscape(o.status),
+            csvEscape(o.utr),
+            csvEscape(o.create_date)
+        ].join(','));
+    });
+    lines.push('');
+    lines.push('--- SUMMARY ---');
+    lines.push(`Total Orders,${ordersData.totals.total_count || 0}`);
+    lines.push(`SUCCESS,${ordersData.totals.success_count || 0}`);
+    lines.push(`PENDING,${ordersData.totals.pending_count || 0}`);
+    lines.push(`FAILURE,${ordersData.totals.failure_count || 0}`);
+    lines.push(`SUCCESS Amount (Rs),${ordersData.totals.success_amount || 0}`);
+    lines.push(`Total Amount (Rs),${ordersData.totals.total_amount || 0}`);
+    lines.push('');
 
-    // --- Vazhipadu Sheet ---
-    const vazhiHeaders = ['Order ID', 'Phone', 'Vazhipadu', 'Devotee', 'Nakshathram', 'Date', 'Amount (₹)', 'Mode', 'Status', 'Booked At'];
-    const vazhiRows = [
-        ['--- VAZHIPADU BOOKINGS ---'],
-        [`Period: ${dateFilter.label}`, '', '', '', '', '', '', '', '', ''],
-        [''],
-        vazhiHeaders,
-        ...vazhipaduData.rows.map(v => [
-            v.order_id, v.phone_number, v.vazhipadu_name, v.devotee_name,
-            v.nakshathram, v.performing_date, v.amount, v.payment_mode, v.status, v.created_at
-        ]),
-        [''],
-        ['--- SUMMARY ---', '', '', '', '', '', '', '', '', ''],
-        ['Total Bookings', vazhipaduData.totals.total_count || 0, '', '', '', '', '', '', '', ''],
-        ['UPI Count', vazhipaduData.totals.upi_count || 0, '', '', '', '', '', '', '', ''],
-        ['Counter Count', vazhipaduData.totals.counter_count || 0, '', '', '', '', '', '', '', ''],
-        ['Total Amount (₹)', vazhipaduData.totals.total_amount || 0, '', '', '', '', '', '', '', ''],
-        ['Confirmed Amount (₹)', vazhipaduData.totals.confirmed_amount || 0, '', '', '', '', '', '', '', ''],
-    ];
-    const vazhiSheet = XLSX.utils.aoa_to_sheet(vazhiRows);
-    vazhiSheet['!cols'] = [15, 15, 25, 20, 18, 14, 12, 10, 12, 18];
-    XLSX.utils.book_append_sheet(wb, vazhiSheet, 'Vazhipadu');
+    lines.push('=== VAZHIPADU BOOKINGS ===');
+    lines.push(`Period: ${dateFilter.label}`);
+    lines.push('');
+    lines.push('Order ID,Phone,Vazhipadu,Devotee,Nakshathram,Date,Amount (Rs),Mode,Status,Booked At');
+    vazhipaduData.rows.forEach(v => {
+        lines.push([
+            csvEscape(v.order_id), csvEscape(v.phone_number), csvEscape(v.vazhipadu_name),
+            csvEscape(v.devotee_name), csvEscape(v.nakshathram), csvEscape(v.performing_date),
+            csvEscape(v.amount), csvEscape(v.payment_mode), csvEscape(v.status), csvEscape(v.created_at)
+        ].join(','));
+    });
+    lines.push('');
+    lines.push('--- SUMMARY ---');
+    lines.push(`Total Bookings,${vazhipaduData.totals.total_count || 0}`);
+    lines.push(`UPI Count,${vazhipaduData.totals.upi_count || 0}`);
+    lines.push(`Counter Count,${vazhipaduData.totals.counter_count || 0}`);
+    lines.push(`Total Amount (Rs),${vazhipaduData.totals.total_amount || 0}`);
+    lines.push(`Confirmed Amount (Rs),${vazhipaduData.totals.confirmed_amount || 0}`);
+    lines.push('');
 
-    // --- Donations Sheet ---
-    const donHeaders = ['Order ID', 'Phone', 'WhatsApp Name', 'Amount (₹)', 'Mode', 'Status', 'Date', 'Purpose'];
-    const donRows = [
-        ['--- DONATIONS ---'],
-        [`Period: ${dateFilter.label}`, '', '', '', '', '', '', ''],
-        [''],
-        donHeaders,
-        ...donationsData.rows.map(d => [
-            d.order_id, d.phone_number, d.whatsapp_name || '', d.amount,
-            d.payment_mode, d.status, d.created_at, d.purpose || ''
-        ]),
-        [''],
-        ['--- SUMMARY ---', '', '', '', '', '', '', ''],
-        ['Total Donations', donationsData.totals.total_count || 0, '', '', '', '', '', ''],
-        ['UPI Count', donationsData.totals.upi_count || 0, '', '', '', '', '', ''],
-        ['Counter Count', donationsData.totals.counter_count || 0, '', '', '', '', '', ''],
-        ['Total Amount (₹)', donationsData.totals.total_amount || 0, '', '', '', '', '', ''],
-        ['Confirmed Amount (₹)', donationsData.totals.confirmed_amount || 0, '', '', '', '', '', ''],
-    ];
-    const donSheet = XLSX.utils.aoa_to_sheet(donRows);
-    donSheet['!cols'] = [15, 15, 22, 12, 10, 12, 18, 25];
-    XLSX.utils.book_append_sheet(wb, donSheet, 'Donations');
+    lines.push('=== DONATIONS ===');
+    lines.push(`Period: ${dateFilter.label}`);
+    lines.push('');
+    lines.push('Order ID,Phone,WhatsApp Name,Amount (Rs),Mode,Status,Date,Purpose');
+    donationsData.rows.forEach(d => {
+        lines.push([
+            csvEscape(d.order_id), csvEscape(d.phone_number), csvEscape(d.whatsapp_name || ''),
+            csvEscape(d.amount), csvEscape(d.payment_mode), csvEscape(d.status),
+            csvEscape(d.created_at), csvEscape(d.purpose || '')
+        ].join(','));
+    });
+    lines.push('');
+    lines.push('--- SUMMARY ---');
+    lines.push(`Total Donations,${donationsData.totals.total_count || 0}`);
+    lines.push(`UPI Count,${donationsData.totals.upi_count || 0}`);
+    lines.push(`Counter Count,${donationsData.totals.counter_count || 0}`);
+    lines.push(`Total Amount (Rs),${donationsData.totals.total_amount || 0}`);
+    lines.push(`Confirmed Amount (Rs),${donationsData.totals.confirmed_amount || 0}`);
+    lines.push('');
 
-    // --- Grand Total Sheet ---
     const grandTotal = (ordersData.totals.total_amount || 0) + (vazhipaduData.totals.total_amount || 0) + (donationsData.totals.total_amount || 0);
-    const grandRows = [
-        ['--- GRAND TOTAL ---'],
-        [`Period: ${dateFilter.label}`, ''],
-        [''],
-        ['Category', 'Count', 'Total Amount (₹)'],
-        ['Transactions (SUCCESS)', ordersData.totals.success_count || 0, ordersData.totals.success_amount || 0],
-        ['Vazhipadu', vazhipaduData.totals.total_count || 0, vazhipaduData.totals.total_amount || 0],
-        ['Donations', donationsData.totals.total_count || 0, donationsData.totals.total_amount || 0],
-        [''],
-        ['GRAND TOTAL (₹)', '', grandTotal],
-    ];
-    const grandSheet = XLSX.utils.aoa_to_sheet(grandRows);
-    grandSheet['!cols'] = [30, 15, 20];
-    XLSX.utils.book_append_sheet(wb, grandSheet, 'Grand Total');
+    lines.push('=== GRAND TOTAL ===');
+    lines.push(`Period: ${dateFilter.label}`);
+    lines.push('');
+    lines.push('Category,Count,Total Amount (Rs)');
+    lines.push(`Transactions (SUCCESS),${ordersData.totals.success_count || 0},${ordersData.totals.success_amount || 0}`);
+    lines.push(`Vazhipadu,${vazhipaduData.totals.total_count || 0},${vazhipaduData.totals.total_amount || 0}`);
+    lines.push(`Donations,${donationsData.totals.total_count || 0},${donationsData.totals.total_amount || 0}`);
+    lines.push('');
+    lines.push(`GRAND TOTAL (Rs),,${grandTotal}`);
 
-    return wb;
+    return lines.join('\n');
 }
 
 // GET /dashboard/transactions - Report page
@@ -250,41 +240,32 @@ router.get('/transactions', async (req, res) => {
         });
 
     } catch (err) {
-        console.error(err);
+        console.error('[reports] Error loading report:', err);
         res.status(500).send("Error loading report.");
     }
 });
 
-// GET /dashboard/transactions.xlsx - Download as Excel
+// GET /dashboard/transactions.xlsx - Download as CSV
 router.get('/transactions.xlsx', async (req, res) => {
     const db = req.db;
     const user = req.user;
     const { from_date, to_date, period } = req.query;
 
     try {
-        let XLSX;
-        try {
-            XLSX = require('xlsx');
-        } catch {
-            return res.status(500).send("Excel export is not available. The xlsx module is not installed.");
-        }
-
         const dateFilter = buildDateFilter({ from_date, to_date, period });
         const ordersData = await fetchOrders(db, user.user_id, dateFilter);
         const vazhipaduData = await fetchVazhipadu(db, dateFilter);
         const donationsData = await fetchDonations(db, dateFilter);
 
-        const wb = buildWorkbook(ordersData, vazhipaduData, donationsData, dateFilter, XLSX);
+        const csv = buildCSV(ordersData, vazhipaduData, donationsData, dateFilter);
 
-        const filename = `report_${dateFilter.from}_to_${dateFilter.to}.xlsx`;
-        const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        const filename = `report_${dateFilter.from}_to_${dateFilter.to}.csv`;
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
         res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`);
-        res.send(buf);
+        res.send(csv);
 
     } catch (err) {
-        console.error(err);
+        console.error('[reports] Error generating CSV:', err);
         res.status(500).send("Error generating report.");
     }
 });
