@@ -51,6 +51,9 @@ app.use('/', authRoutes);
 const dashboardRoutes = require('./routes/dashboard');
 app.use('/dashboard', dashboardRoutes);
 
+const reportsRoutes = require('./routes/reports');
+app.use('/dashboard', reportsRoutes);
+
 const vazhipaduRoutes = require('./routes/vazhipadu');
 app.use('/dashboard/vazhipadu', vazhipaduRoutes);
 

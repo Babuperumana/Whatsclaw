@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en" class="light-style layout-menu-fixed layout-compact" dir="ltr" data-theme="theme-default">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
+    <title><%= site.brand_name %> | Transactions Report</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f5f5f9; font-family: 'Inter', sans-serif; }
+        .sidebar {
+            min-height: 100vh; background-color: #fff;
+            box-shadow: 0 0.125rem 0.25rem rgba(161, 172, 184, 0.075);
+        }
+        .stat-card {
+            border: none; border-radius: 8px;
+            box-shadow: 0 0.25rem 1rem rgba(161, 172, 184, 0.2);
+        }
+        .filter-bar {
+            background: #fff; border-radius: 8px;
+            box-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.06);
+            padding: 16px 20px; margin-bottom: 20px;
+        }
+        .filter-bar .form-label { font-size: 0.85rem; font-weight: 600; color: #495057; }
+        .filter-bar select, .filter-bar input[type="date"] {
+            font-size: 0.9rem; border-radius: 6px;
+        }
+        .section-title {
+            font-size: 1rem; font-weight: 700; color: #344767;
+            margin-bottom: 12px; padding-bottom: 8px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .summary-card {
+            border: none; border-radius: 8px;
+            box-shadow: 0 0.125rem 0.5rem rgba(0,0,0,0.08);
+        }
+        .summary-value { font-size: 1.4rem; font-weight: 700; }
+        .summary-label { font-size: 0.8rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; }
+        .table thead th {
+            font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;
+            background-color: #f8f9fa; color: #495057; font-weight: 600;
+        }
+        .table td { font-size: 0.88rem; vertical-align: middle; }
+        .total-row td {
+            background-color: #fff8e1 !important; font-weight: 700;
+            border-top: 2px solid #dee2e6;
+        }
+        .period-badge {
+            background: #e8f0fe; color: #1967d2; padding: 6px 14px;
+            border-radius: 20px; font-size: 0.85rem; font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar p-3">
+                <div class="text-center mb-4 mt-2">
+                    <h5><%= site.brand_name %></h5>
+                </div>
+                <ul class="nav flex-column gap-2">
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/dashboard"><i class="bi bi-house-door me-2"></i> Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/dashboard/vazhipadu"><i class="bi bi-flower1 me-2"></i> Vazhipadu Master</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/dashboard/specialdays"><i class="bi bi-calendar-event me-2"></i> Special Days</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/dashboard/nakshathrapooja"><i class="bi bi-stars me-2"></i> Nakshathra Poojas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/dashboard/whatsapp"><i class="bi bi-whatsapp me-2"></i> WhatsApp</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active fw-bold text-primary" href="/dashboard/transactions"><i class="bi bi-list-check me-2"></i> Transactions</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="#"><i class="bi bi-shop me-2"></i> Connect Merchant</a>
+                    </li>
+                    <li class="nav-item mt-4">
+                        <a class="nav-link text-danger" href="/logout"><i class="bi bi-box-arrow-right me-2"></i> Logout</a>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10 p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4>Transaction Reports</h4>
+                    <span class="period-badge"><i class="bi bi-calendar3 me-1"></i> <%= dateFilter.label %></span>
+                </div>
+
+                <!-- Filter Bar -->
+                <div class="filter-bar">
+                    <form method="GET" action="/dashboard/transactions" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">Quick Select</label>
+                            <select name="period" class="form-select" onchange="this.form.submit()">
+                                <option value="">-- Custom Range --</option>
+                                <option value="today" <%= (period === 'today' || (!from_date && !to_date && !period)) ? 'selected' : '' %>>Today</option>
+                                <option value="week" <%= period === 'week' ? 'selected' : '' %>>Last 7 Days</option>
+                                <option value="30days" <%= period === '30days' ? 'selected' : '' %>>Last 30 Days</option>
+                                <option value="month" <%= period === 'month' ? 'selected' : '' %>>This Month</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">From Date</label>
+                            <input type="date" name="from_date" class="form-control" value="<%= from_date || '' %>">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">To Date</label>
+                            <input type="date" name="to_date" class="form-control" value="<%= to_date || '' %>">
+                        </div>
+                        <div class="col-md-3 d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-grow-1">
+                                <i class="bi bi-funnel me-1"></i> Apply
+                            </button>
+                            <a href="/dashboard/transactions.xlsx?<%= (from_date && to_date) ? 'from_date=' + from_date + '&to_date=' + to_date : 'period=' + (period || '30days') %>"
+                               class="btn btn-success flex-grow-1" title="Download as Excel">
+                                <i class="bi bi-file-earmark-excel me-1"></i> Export
+                            </a>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Transactions Summary Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="card summary-card p-3">
+                            <div class="summary-label">Total Orders</div>
+                            <div class="summary-value text-primary"><%= ordersTotals.total_count || 0 %></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card summary-card p-3">
+                            <div class="summary-label">SUCCESS Amount</div>
+                            <div class="summary-value text-success">₹ <%= (ordersTotals.success_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card summary-card p-3">
+                            <div class="summary-label">PENDING</div>
+                            <div class="summary-value text-warning"><%= ordersTotals.pending_count || 0 %></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card summary-card p-3">
+                            <div class="summary-label">FAILURE</div>
+                            <div class="summary-value text-danger"><%= ordersTotals.failure_count || 0 %></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transactions Table -->
+                <div class="card stat-card mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">Transactions (<%= orders.length %> records)</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Amount</th>
+                                        <th>Payer Name</th>
+                                        <th>Payment App</th>
+                                        <th>Status</th>
+                                        <th>UTR</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (orders.length > 0) { %>
+                                        <% orders.forEach(order => { %>
+                                            <tr>
+                                                <td><span class="text-primary fw-bold"><%= order.order_id %></span></td>
+                                                <td>₹ <%= order.amount %></td>
+                                                <td><%= order.payer_name || '-' %></td>
+                                                <td><%= order.payer_handle ? '<span class="badge bg-light text-dark border">' + order.payer_handle + '</span>' : '-' %></td>
+                                                <td>
+                                                    <% if (order.status === 'SUCCESS') { %>
+                                                        <span class="badge bg-success">SUCCESS</span>
+                                                    <% } else if (order.status === 'FAILURE') { %>
+                                                        <span class="badge bg-danger">FAILURE</span>
+                                                    <% } else { %>
+                                                        <span class="badge bg-warning text-dark">PENDING</span>
+                                                    <% } %>
+                                                </td>
+                                                <td><%= order.utr || '-' %></td>
+                                                <td><%= order.create_date %></td>
+                                            </tr>
+                                        <% }) %>
+                                        <tr class="total-row">
+                                            <td><strong>Total</strong></td>
+                                            <td>₹ <%= (ordersTotals.total_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></td>
+                                            <td colspan="5"></td>
+                                        </tr>
+                                    <% } else { %>
+                                        <tr><td colspan="7" class="text-center py-4">No transactions found for this period.</td></tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vazhipadu Summary Cards -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        <div class="card summary-card p-3">
+                            <div class="summary-label">Vazhipadu Bookings</div>
+                            <div class="summary-value text-primary"><%= vazhiTotals.total_count || 0 %></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card summary-card p-3">
+                            <div class="summary-label">Vazhipadu Amount</div>
+                            <div class="summary-value text-success">₹ <%= (vazhiTotals.total_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card summary-card p-3">
+                            <div class="summary-label">Confirmed</div>
+                            <div class="summary-value text-success">₹ <%= (vazhiTotals.confirmed_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card summary-card p-3">
+                            <div class="summary-label">Pending</div>
+                            <div class="summary-value text-warning">₹ <%= (vazhiTotals.pending_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vazhipadu Table -->
+                <div class="card stat-card mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">Vazhipadu Bookings (WhatsApp) (<%= vazhipadu.length %> records)</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Phone</th>
+                                        <th>Vazhipadu</th>
+                                        <th>Devotee</th>
+                                        <th>Nakshathram</th>
+                                        <th>Date</th>
+                                        <th>Amount</th>
+                                        <th>Mode</th>
+                                        <th>Status</th>
+                                        <th>Booked At</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (vazhipadu.length > 0) { %>
+                                        <% vazhipadu.forEach(v => { %>
+                                            <tr>
+                                                <td><%= v.order_id %></td>
+                                                <td><%= v.phone_number %></td>
+                                                <td><%= v.vazhipadu_name %></td>
+                                                <td><%= v.devotee_name %></td>
+                                                <td><%= v.nakshathram %></td>
+                                                <td><%= v.performing_date %></td>
+                                                <td>₹ <%= v.amount %></td>
+                                                <td><span class="badge bg-secondary"><%= v.payment_mode %></span></td>
+                                                <td>
+                                                    <% if (v.status === 'CONFIRMED') { %>
+                                                        <span class="badge bg-success">CONFIRMED</span>
+                                                    <% } else { %>
+                                                        <span class="badge bg-warning text-dark"><%= v.status %></span>
+                                                    <% } %>
+                                                </td>
+                                                <td><%= v.created_at %></td>
+                                            </tr>
+                                        <% }) %>
+                                        <tr class="total-row">
+                                            <td colspan="6"><strong>Total</strong></td>
+                                            <td>₹ <%= (vazhiTotals.total_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></td>
+                                            <td colspan="3"></td>
+                                        </tr>
+                                    <% } else { %>
+                                        <tr><td colspan="10" class="text-center py-4">No vazhipadu bookings found for this period.</td></tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Donations Summary Cards -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-3">
+                        <div class="card summary-card p-3">
+                            <div class="summary-label">Donations</div>
+                            <div class="summary-value text-primary"><%= donTotals.total_count || 0 %></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card summary-card p-3">
+                            <div class="summary-label">Donation Amount</div>
+                            <div class="summary-value text-success">₹ <%= (donTotals.total_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card summary-card p-3">
+                            <div class="summary-label">Confirmed</div>
+                            <div class="summary-value text-success">₹ <%= (donTotals.confirmed_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card summary-card p-3">
+                            <div class="summary-label">Pending</div>
+                            <div class="summary-value text-warning">₹ <%= (donTotals.pending_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Donations Table -->
+                <div class="card stat-card mb-4">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">Donations (WhatsApp) (<%= donations.length %> records)</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Phone</th>
+                                        <th>WhatsApp Name</th>
+                                        <th>Amount</th>
+                                        <th>Mode</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                        <th>Purpose</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (donations.length > 0) { %>
+                                        <% donations.forEach(d => { %>
+                                            <tr>
+                                                <td><%= d.order_id %></td>
+                                                <td><%= d.phone_number %></td>
+                                                <td><%= d.whatsapp_name || '-' %></td>
+                                                <td>₹ <%= d.amount %></td>
+                                                <td><span class="badge bg-secondary"><%= d.payment_mode %></span></td>
+                                                <td>
+                                                    <% if (d.status === 'CONFIRMED') { %>
+                                                        <span class="badge bg-success">CONFIRMED</span>
+                                                    <% } else { %>
+                                                        <span class="badge bg-warning text-dark"><%= d.status %></span>
+                                                    <% } %>
+                                                </td>
+                                                <td><%= d.created_at %></td>
+                                                <td><%= d.purpose || '-' %></td>
+                                            </tr>
+                                        <% }) %>
+                                        <tr class="total-row">
+                                            <td colspan="3"><strong>Total</strong></td>
+                                            <td>₹ <%= (donTotals.total_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></td>
+                                            <td colspan="4"></td>
+                                        </tr>
+                                    <% } else { %>
+                                        <tr><td colspan="8" class="text-center py-4">No donations found for this period.</td></tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grand Total -->
+                <div class="card stat-card">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0">Grand Total</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-md-4">
+                                <div class="summary-label">Transactions</div>
+                                <div class="summary-value text-primary">₹ <%= (ordersTotals.success_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="summary-label">Vazhipadu</div>
+                                <div class="summary-value text-primary">₹ <%= (vazhiTotals.total_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="summary-label">Donations</div>
+                                <div class="summary-value text-primary">₹ <%= (donTotals.total_amount || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></div>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="text-center">
+                            <span class="summary-label">Overall Collection (Period: <%= dateFilter.label %>)</span>
+                            <div class="summary-value text-success" style="font-size: 2rem;">
+                                ₹ <%= ((ordersTotals.success_amount || 0) + (vazhiTotals.total_amount || 0) + (donTotals.total_amount || 0)).toLocaleString('en-IN', {minimumFractionDigits: 2}) %>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
