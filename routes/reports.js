@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const path = require('path');
-const XLSX = require('xlsx');
 const { requireAuth } = require('../middleware/auth');
 
 // Helpers to wrap SQLite queries in Promises
@@ -34,12 +33,13 @@ function buildDateFilter(params) {
         const now = new Date();
         const to = now.toISOString().split('T')[0];
         let from;
+        let d;
         switch (period) {
             case 'today':
                 from = to;
                 break;
             case 'week':
-                const d = new Date(now);
+                d = new Date(now);
                 d.setDate(d.getDate() - 6);
                 from = d.toISOString().split('T')[0];
                 break;
@@ -124,7 +124,7 @@ async function fetchDonations(db, dateFilter) {
     return { rows, totals: totals || {} };
 }
 
-function buildWorkbook(ordersData, vazhipaduData, donationsData, dateFilter) {
+function buildWorkbook(ordersData, vazhipaduData, donationsData, dateFilter, XLSX) {
     const wb = XLSX.utils.book_new();
 
     // --- Orders Sheet ---
@@ -262,12 +262,19 @@ router.get('/transactions.xlsx', async (req, res) => {
     const { from_date, to_date, period } = req.query;
 
     try {
+        let XLSX;
+        try {
+            XLSX = require('xlsx');
+        } catch {
+            return res.status(500).send("Excel export is not available. The xlsx module is not installed.");
+        }
+
         const dateFilter = buildDateFilter({ from_date, to_date, period });
         const ordersData = await fetchOrders(db, user.user_id, dateFilter);
         const vazhipaduData = await fetchVazhipadu(db, dateFilter);
         const donationsData = await fetchDonations(db, dateFilter);
 
-        const wb = buildWorkbook(ordersData, vazhipaduData, donationsData, dateFilter);
+        const wb = buildWorkbook(ordersData, vazhipaduData, donationsData, dateFilter, XLSX);
 
         const filename = `report_${dateFilter.from}_to_${dateFilter.to}.xlsx`;
         const buf = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
