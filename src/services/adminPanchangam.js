@@ -74,8 +74,8 @@ function buildPanchangamMessage(isoDate, language) {
     const gregorian = `${d}/${m}/${y}`;
 
     const nak = pickLangValue(pan.nakshathram, lang);
-    const tithi = pan.tithi ? (pan.tithi.name || 'N/A') : 'N/A';
-    const paksha = pan.tithi && pan.tithi.paksha ? pan.tithi.paksha : '';
+    const tithiName = isML ? (pan.tithi && pan.tithi.nameMl ? pan.tithi.nameMl : (pan.tithi ? pan.tithi.name : 'N/A')) : (pan.tithi ? pan.tithi.name : 'N/A');
+    const paksha = pan.tithi && pan.tithi.paksha ? (isML ? (pan.tithi.pakshaMl || pan.tithi.paksha) : pan.tithi.paksha) : '';
     const yoga = pickLangValue(pan.yoga, lang);
     const karana = pickLangValue(pan.karana, lang);
     const sunrise = pan.sunrise || 'N/A';
@@ -129,7 +129,7 @@ function buildPanchangamMessage(isoDate, language) {
         lines.push(t_('nakshathram_simple_label', { nak: nak || 'N/A' }));
     }
 
-    lines.push(t_('tithi_label', { tithi, paksha }));
+    lines.push(t_('tithi_label', { tithi: tithiName, paksha }));
     lines.push(t_('yoga_label', { yoga }));
     lines.push(t_('karana_label', { karana }));
     lines.push(t_('sunrise_label', { time: sunrise }));
