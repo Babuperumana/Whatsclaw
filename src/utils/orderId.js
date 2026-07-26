@@ -51,6 +51,14 @@ async function seedCounters(getXbyY, setXbyY) {
 async function generateOrderId(type, getXbyY, setXbyY) {
     if (!TABLE_MAP[type]) throw new Error(`Unknown order type: ${type}`);
 
+    // Ensure the counter table exists (self-healing for existing DBs).
+    await setXbyY(
+        `CREATE TABLE IF NOT EXISTS order_counters (
+            type TEXT PRIMARY KEY,
+            next_num INTEGER NOT NULL DEFAULT 1
+        )`
+    );
+
     // Ensure the counter row exists for this type.
     await setXbyY(
         `INSERT OR IGNORE INTO order_counters (type, next_num) VALUES (?, 1)`,
