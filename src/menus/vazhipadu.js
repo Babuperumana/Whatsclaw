@@ -320,7 +320,7 @@ module.exports = {
             case STATES.VAZHIPADU_PAYMENT_MODE: {
                 const mode = text.toUpperCase();
                 if (mode === 'PAY_UPI' || text === '1') {
-                    const order_id = await generateOrderId('V', getXbyY);
+                    const order_id = await generateOrderId('V', getXbyY, setXbyY);
                     await sock.sendMessage(jid, { text: t(lang, 'vazhipadu.generating_qr') });
                     payment.generateUPIPayment(jid, session.totalAmount, sock, order_id, async (order_id) => {
                         let receipt = t(lang, 'vazhipadu.receipt_paid', { order_id });
@@ -336,7 +336,7 @@ module.exports = {
                         session.state = STATES.IDLE;
                     }, lang);
                 } else if (mode === 'PAY_COUNTER' || text === '2') {
-                    const order_id = await generateOrderId('CV', getXbyY);
+                    const order_id = await generateOrderId('CV', getXbyY, setXbyY);
                     let receipt = t(lang, 'vazhipadu.receipt_counter', { order_id, total: session.totalAmount });
                     let admin = adminMsg('vazhipadu_counter_header', { order_id, phone: userPhone, name: pushName || 'N/A', total: session.totalAmount });
                     for (let b of session.bookings) {

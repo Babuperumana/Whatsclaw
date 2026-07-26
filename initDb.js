@@ -292,6 +292,15 @@ CREATE TABLE reminder_runs (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(slot, run_date)
 );
+
+-- Atomic counter for order IDs (V/D/CV/CD). Survives restarts and never
+-- produces duplicates, even with concurrent requests.
+CREATE TABLE IF NOT EXISTS order_counters (
+  type TEXT PRIMARY KEY,   -- 'V' | 'D' | 'CV' | 'CD'
+  next_num INTEGER NOT NULL DEFAULT 1
+);
+
+INSERT OR IGNORE INTO order_counters (type, next_num) VALUES ('V', 1), ('D', 1), ('CV', 1), ('CD', 1);
 `;
 
 db.exec(schema, (err) => {

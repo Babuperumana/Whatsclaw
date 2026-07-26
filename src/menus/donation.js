@@ -95,7 +95,7 @@ module.exports = {
                 const mode = text.toUpperCase();
                 const purposeDisplay = purposeLabel(lang, session.donationPurpose);
                 if (mode === 'PAY_UPI' || text === '1') {
-                    const order_id = await generateOrderId('D', getXbyY);
+                    const order_id = await generateOrderId('D', getXbyY, setXbyY);
                     await sock.sendMessage(jid, { text: t(lang, 'donation.generating_qr') });
                     payment.generateUPIPayment(jid, session.donationAmount, sock, order_id, async (order_id) => {
                         await setXbyY(`INSERT INTO donations_payment_details (order_id, phone_number, whatsapp_name, amount, purpose, payment_mode, status) VALUES (?, ?, ?, ?, ?, 'UPI', 'CONFIRMED')`, [order_id, userPhone, pushName, session.donationAmount, session.donationPurpose]);
@@ -105,7 +105,7 @@ module.exports = {
                         session.state = STATES.IDLE;
                     }, lang);
                 } else if (mode === 'PAY_COUNTER' || text === '2') {
-                    const order_id = await generateOrderId('CD', getXbyY);
+                    const order_id = await generateOrderId('CD', getXbyY, setXbyY);
                     await setXbyY(`INSERT INTO donations_payment_details (order_id, phone_number, whatsapp_name, amount, purpose, payment_mode, status) VALUES (?, ?, ?, ?, ?, 'COUNTER', 'PENDING')`, [order_id, userPhone, pushName, session.donationAmount, session.donationPurpose]);
                     const receipt = t(lang, 'donation.receipt_counter', { order_id, purpose: purposeDisplay, amount: session.donationAmount });
                     await sock.sendMessage(jid, { text: receipt });

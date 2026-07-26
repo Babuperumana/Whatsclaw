@@ -72,8 +72,12 @@ app.get('/', (req, res) => {
 });
 
 const { initWhatsAppBot } = require('./whatsappBot');
+const { createDb } = require('./src/services/db');
+const { seedCounters } = require('./src/utils/orderId');
 
 app.listen(port, () => {
     console.log(`Temple UPI Gateway Node.js Server listening at http://localhost:${port}`);
+    const { getXbyY, setXbyY } = createDb(db);
+    seedCounters(getXbyY, setXbyY).catch(e => console.error('Failed to seed order counters:', e));
     initWhatsAppBot(db);
 });
