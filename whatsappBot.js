@@ -1,4 +1,4 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('ai-md-baileys');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('my-md-baileys');
 const pino = require('pino');
 const path = require('path');
 
