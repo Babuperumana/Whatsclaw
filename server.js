@@ -21,37 +21,6 @@ const db = new sqlite3.Database(path.resolve(DATA_DIR, 'database.sqlite'), sqlit
     }
 });
 
-// ONE-TIME BOOTSTRAP: promote babuperumana@gmail.com to superadmin if no superadmin exists yet.
-// After this runs successfully, remove this block in the next deployment.
-(function bootstrapSuperadmin() {
-    const BOOTSTRAP_EMAIL = 'babuperumana@gmail.com';
-    db.get(`SELECT COUNT(*) AS c FROM users WHERE lower(role) = 'superadmin'`, (err, row) => {
-        if (err) {
-            console.error('[bootstrap] count error:', err.message);
-            return;
-        }
-        if (row.c > 0) {
-            console.log('[bootstrap] superadmin already exists, skipping.');
-            return;
-        }
-        db.run(
-            `UPDATE users SET role = 'superadmin' WHERE lower(email) = ?`,
-            [BOOTSTRAP_EMAIL.toLowerCase()],
-            function (err) {
-                if (err) {
-                    console.error('[bootstrap] promote error:', err.message);
-                    return;
-                }
-                if (this.changes > 0) {
-                    console.log(`[bootstrap] promoted ${BOOTSTRAP_EMAIL} to superadmin (${this.changes} row).`);
-                } else {
-                    console.log(`[bootstrap] no user matched ${BOOTSTRAP_EMAIL}, no promotion performed.`);
-                }
-            }
-        );
-    });
-})();
-
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
