@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
+const { sendWhatsAppMessage, ADMIN_NOTIFY_JID } = require('../whatsappBot');
 
 // Helpers to wrap SQLite queries in Promises
 const getXbyY = (db, query, params = []) => {
@@ -20,6 +21,27 @@ const getXbyYOne = (db, query, params = []) => {
         });
     });
 };
+
+const setXbyY = (db, query, params = []) => {
+    return new Promise((resolve, reject) => {
+        db.run(query, params, function (err) {
+            if (err) reject(err);
+            else resolve(this);
+        });
+    });
+};
+
+function hasCRUDPermission(userRole, action) {
+    const role = (userRole || 'User').toLowerCase();
+    if (role === 'superadmin') return true;
+    if (role === 'admin' && action !== 'delete') return true;
+    if (role === 'staff' && (action === 'create' || action === 'read')) return true;
+    return false;
+}
+
+function canCreate(role) { return hasCRUDPermission(role, 'create'); }
+function canEdit(role) { return hasCRUDPermission(role, 'update'); }
+function canDelete(role) { return hasCRUDPermission(role, 'delete'); }
 
 router.use(requireAuth);
 
@@ -272,5 +294,248 @@ router.get('/transactions.xlsx', async (req, res) => {
         res.status(500).send("Error generating report.");
     }
 });
+
+// ── CRUD Routes ───────────────────────────────────────────────────────────────
+
+// Helper: enforce CRUD permissions
+function enforcePermission(userRole, action) {
+    if (!hasCRUDPermission(userRole, action)) {
+        throw Object.assign(new Error('Forbidden'), { status: 403 });
+    }
+}
+
+// POST /dashboard/transactions/order/create - Create a manual order
+router.post('/order/create', async (req, res) => {
+    const db = req.db;
+    const user = req.user;
+    const userRole = (user.role || 'User').toLowerCase();
+
+    try {
+        enforcePermission(userRole, 'create');
+        const { order_id, amount, payer_name, payer_handle, status, utr } = req.body;
+        if (!order_id || !amount) {
+            return res.redirect('back');
+        }
+        const validStatus = ['SUCCESS', 'PENDING', 'FAILURE'];
+        const finalStatus = validStatus.includes(status) ? status : 'PENDING';
+        await setXbyY(db,
+            `INSERT INTO orders (order_id, amount, payer_name, payer_handle, status, utr, create_date, user_id) VALUES (?, ?, ?, ?, ?, ?, datetime('now'), ?)`,
+            [order_id, amount, payer_name || null, payer_handle || null, finalStatus, utr || null, user.user_id]
+        );
+        res.redirect('back');
+    } catch (err) {
+        console.error('[reports] Create order error:', err);
+        res.redirect('back');
+    }
+});
+
+// POST /dashboard/transactions/order/update/:id
+router.post('/order/update/:id', async (req, res) => {
+    const db = req.db;
+    const user = req.user;
+
+    try {
+        enforcePermission((user.role || 'User').toLowerCase(), 'update');
+        const { amount, payer_name, payer_handle, status, utr } = req.body;
+        const oldRow = await getXbyYOne(db, `SELECT * FROM orders WHERE id = ?`, [req.params.id]);
+        await setXbyY(db,
+            `UPDATE orders SET amount = ?, payer_name = ?, payer_handle = ?, status = ?, utr = ? WHERE id = ?`,
+            [amount, payer_name || null, payer_handle || null, status, utr || null, req.params.id]
+        );
+        if (oldRow && (user.role || '').toLowerCase() !== 'staff') {
+            notifyAdminOfEdit({
+                editorName: user.name || user.mobile,
+                entityType: 'order',
+                action: 'Update',
+                recordId: oldRow.order_id || req.params.id,
+                oldRow,
+                newRow: { ...oldRow, amount, payer_name, payer_handle, status, utr }
+            });
+        }
+        res.redirect('back');
+    } catch (err) {
+        console.error('[reports] Update order error:', err);
+        res.redirect('back');
+    }
+});
+
+// POST /dashboard/transactions/order/delete/:id
+router.post('/order/delete/:id', async (req, res) => {
+    const db = req.db;
+    const user = req.user;
+
+    try {
+        enforcePermission((user.role || 'User').toLowerCase(), 'delete');
+        await setXbyY(db, `DELETE FROM orders WHERE id = ?`, [req.params.id]);
+        res.redirect('back');
+    } catch (err) {
+        console.error('[reports] Delete order error:', err);
+        res.redirect('back');
+    }
+});
+
+// POST /dashboard/transactions/vazhipadu/create
+router.post('/vazhipadu/create', async (req, res) => {
+    const db = req.db;
+    const user = req.user;
+
+    try {
+        enforcePermission((user.role || 'User').toLowerCase(), 'create');
+        const { order_id, phone_number, vazhipadu_name, devotee_name, nakshathram, performing_date, amount, payment_mode, status } = req.body;
+        if (!order_id || !amount) {
+            return res.redirect('back');
+        }
+        await setXbyY(db,
+            `INSERT INTO vazhipadu_bookings (order_id, phone_number, vazhipadu_name, devotee_name, nakshathram, performing_date, amount, payment_mode, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+            [order_id, phone_number || '', vazhipadu_name || '', devotee_name || '', nakshathram || '', performing_date || '', amount, payment_mode || 'COUNTER', status || 'PENDING']
+        );
+        res.redirect('back');
+    } catch (err) {
+        console.error('[reports] Create vazhipadu error:', err);
+        res.redirect('back');
+    }
+});
+
+// POST /dashboard/transactions/vazhipadu/update/:id
+router.post('/vazhipadu/update/:id', async (req, res) => {
+    const db = req.db;
+
+    try {
+        enforcePermission((req.user.role || 'User').toLowerCase(), 'update');
+        const { vazhipadu_name, devotee_name, nakshathram, performing_date, amount, payment_mode, status } = req.body;
+        const oldRow = await getXbyYOne(db, `SELECT * FROM vazhipadu_bookings WHERE id = ?`, [req.params.id]);
+        await setXbyY(db,
+            `UPDATE vazhipadu_bookings SET vazhipadu_name = ?, devotee_name = ?, nakshathram = ?, performing_date = ?, amount = ?, payment_mode = ?, status = ? WHERE id = ?`,
+            [vazhipadu_name, devotee_name, nakshathram, performing_date, amount, payment_mode, status, req.params.id]
+        );
+        if (oldRow) {
+            notifyAdminOfEdit({
+                editorName: req.user.name || req.user.mobile,
+                entityType: 'vazhipadu',
+                action: 'Update',
+                recordId: oldRow.order_id || req.params.id,
+                oldRow,
+                newRow: { ...oldRow, vazhipadu_name, devotee_name, nakshathram, performing_date, amount, payment_mode, status }
+            });
+        }
+        res.redirect('back');
+    } catch (err) {
+        console.error('[reports] Update vazhipadu error:', err);
+        res.redirect('back');
+    }
+});
+
+// POST /dashboard/transactions/vazhipadu/delete/:id
+router.post('/vazhipadu/delete/:id', async (req, res) => {
+    const db = req.db;
+
+    try {
+        enforcePermission((req.user.role || 'User').toLowerCase(), 'delete');
+        await setXbyY(db, `DELETE FROM vazhipadu_bookings WHERE id = ?`, [req.params.id]);
+        res.redirect('back');
+    } catch (err) {
+        console.error('[reports] Delete vazhipadu error:', err);
+        res.redirect('back');
+    }
+});
+
+// POST /dashboard/transactions/donation/create
+router.post('/donation/create', async (req, res) => {
+    const db = req.db;
+    const user = req.user;
+
+    try {
+        enforcePermission((user.role || 'User').toLowerCase(), 'create');
+        const { order_id, phone_number, amount, payment_mode, status, whatsapp_name, purpose } = req.body;
+        if (!order_id || !amount) {
+            return res.redirect('back');
+        }
+        await setXbyY(db,
+            `INSERT INTO donations_payment_details (order_id, phone_number, amount, payment_mode, status, whatsapp_name, purpose, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+            [order_id, phone_number || '', amount, payment_mode || 'COUNTER', status || 'PENDING', whatsapp_name || null, purpose || null]
+        );
+        res.redirect('back');
+    } catch (err) {
+        console.error('[reports] Create donation error:', err);
+        res.redirect('back');
+    }
+});
+
+// POST /dashboard/transactions/donation/update/:id
+router.post('/donation/update/:id', async (req, res) => {
+    const db = req.db;
+
+    try {
+        enforcePermission((req.user.role || 'User').toLowerCase(), 'update');
+        const { amount, payment_mode, status, whatsapp_name, purpose } = req.body;
+        const oldRow = await getXbyYOne(db, `SELECT * FROM donations_payment_details WHERE id = ?`, [req.params.id]);
+        await setXbyY(db,
+            `UPDATE donations_payment_details SET amount = ?, payment_mode = ?, status = ?, whatsapp_name = ?, purpose = ? WHERE id = ?`,
+            [amount, payment_mode, status, whatsapp_name || null, purpose || null, req.params.id]
+        );
+        if (oldRow) {
+            notifyAdminOfEdit({
+                editorName: req.user.name || req.user.mobile,
+                entityType: 'donation',
+                action: 'Update',
+                recordId: oldRow.order_id || req.params.id,
+                oldRow,
+                newRow: { ...oldRow, amount, payment_mode, status, whatsapp_name, purpose }
+            });
+        }
+        res.redirect('back');
+    } catch (err) {
+        console.error('[reports] Update donation error:', err);
+        res.redirect('back');
+    }
+});
+
+// POST /dashboard/transactions/donation/delete/:id
+router.post('/donation/delete/:id', async (req, res) => {
+    const db = req.db;
+
+    try {
+        enforcePermission((req.user.role || 'User').toLowerCase(), 'delete');
+        await setXbyY(db, `DELETE FROM donations_payment_details WHERE id = ?`, [req.params.id]);
+        res.redirect('back');
+    } catch (err) {
+        console.error('[reports] Delete donation error:', err);
+        res.redirect('back');
+    }
+});
+
+// Send a Malayalam WhatsApp notification to the admin group when an admin edits a row.
+// Fire-and-forget: never blocks or fails the CRUD response.
+function notifyAdminOfEdit({ editorName, entityType, action, recordId, oldRow, newRow }) {
+    if (!ADMIN_NOTIFY_JID) return;
+    const fields = Object.keys(newRow || {});
+    const changes = fields.map(f => {
+        const o = oldRow ? (oldRow[f] === null || oldRow[f] === undefined ? '-' : oldRow[f]) : '-';
+        const n = newRow[f] === null || newRow[f] === undefined ? '-' : newRow[f];
+        if (String(o) === String(n)) return null;
+        return `   • ${f}: ${o}  →  ${n}`;
+    }).filter(Boolean).join('\n');
+
+    const entityLabel = {
+        order: 'ഇടപാട് (Transaction)',
+        vazhipadu: 'വഴിപാട് (Vazhipadu)',
+        donation: 'ദാനം (Donation)'
+    }[entityType] || entityType;
+
+    const text =
+        `🔔 *ഡാഷ്ബോർഡ് എഡിറ്റ് അറിയിപ്പ്*\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        `👤 എഡിറ്റ് ചെയ്തത്: *${editorName}*\n` +
+        `📂 വിഭാഗം: *${entityLabel}*\n` +
+        `🛠 പ്രവർത്തനം: *${action}*\n` +
+        `🆔 റെക്കോർഡ് നമ്പർ: ${recordId}\n` +
+        `━━━━━━━━━━━━━━━\n` +
+        (changes ? `📝 *മാറ്റങ്ങൾ:*\n${changes}\n` : 'ℹ️ മാറ്റങ്ങളൊന്നും കാണുന്നില്ല.\n') +
+        `━━━━━━━━━━━━━━━\n` +
+        `🕐 സമയം: ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}`;
+
+    sendWhatsAppMessage(ADMIN_NOTIFY_JID, { type: 'text', text })
+        .catch(err => console.error('[reports] WhatsApp notify failed:', err.message));
+}
 
 module.exports = router;

@@ -64,29 +64,27 @@
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-dark" href="/dashboard/vazhipadu"><i class="bi bi-flower1 me-2"></i>
-                            Vazhipadu Master</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" href="/dashboard/specialdays"><i
-                                class="bi bi-calendar-event me-2"></i> Special Days</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" href="/dashboard/nakshathrapooja"><i
-                                class="bi bi-stars me-2"></i> Nakshathra Poojas</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" href="/dashboard/whatsapp"><i class="bi bi-whatsapp me-2"></i> WhatsApp</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" href="/dashboard/transactions"><i class="bi bi-list-check me-2"></i> Transactions</a>
-                    </li>
-                    <% if (userRole === 'superadmin' || userRole === 'admin') { %>
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" href="/dashboard/users"><i class="bi bi-people me-2"></i> User Management</a>
-                    </li>
-                    <% } %>
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" href="#"><i class="bi bi-shop me-2"></i> Connect Merchant</a>
+                            Vazhipadu Items</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" href="/dashboard/specialdays"><i
+                                    class="bi bi-calendar-event me-2"></i> Special Days</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" href="/dashboard/nakshathrapooja"><i
+                                    class="bi bi-stars me-2"></i> Janma Nakshathra Poojas</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" href="/dashboard/whatsapp"><i class="bi bi-whatsapp me-2"></i> WhatsApp</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" href="/dashboard/transactions"><i class="bi bi-list-check me-2"></i> Transactions</a>
+                        </li>
+                        <% if (userRole === 'superadmin' || userRole === 'admin') { %>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" href="/dashboard/users"><i class="bi bi-people me-2"></i> User Management</a>
+                        </li>
+                        <% } %>
                     </li>
                     <li class="nav-item mt-4">
                         <a class="nav-link text-danger" href="/logout"><i class="bi bi-box-arrow-right me-2"></i>
@@ -169,8 +167,13 @@
 
                 <!-- Recent Transactions -->
                 <div class="card stat-card">
-                    <div class="card-header bg-white py-3">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Recent Transactions (Last 10)</h5>
+                        <% if (userRole === 'superadmin' || userRole === 'admin') { %>
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addOrderModal">
+                            <i class="bi bi-plus-circle me-1"></i> Add Order
+                        </button>
+                        <% } %>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -184,6 +187,9 @@
                                         <th>Status</th>
                                         <th>UTR</th>
                                         <th>Date</th>
+                                        <% if (userRole === 'superadmin' || userRole === 'admin') { %>
+                                        <th class="text-center">Actions</th>
+                                        <% } %>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -226,12 +232,32 @@
                                                 <td>
                                                     <%= order.create_date %>
                                                 </td>
+                                                <% if (userRole === 'superadmin' || userRole === 'admin') { %>
+                                                <td class="text-center">
+                                                    <button class="btn btn-sm btn-outline-primary edit-order-btn"
+                                                            data-id="<%= order.id %>"
+                                                            data-order_id="<%= order.order_id %>"
+                                                            data-amount="<%= order.amount %>"
+                                                            data-payer_name="<%= order.payer_name || '' %>"
+                                                            data-payer_handle="<%= order.payer_handle || '' %>"
+                                                            data-status="<%= order.status %>"
+                                                            data-utr="<%= order.utr || '' %>">
+                                                        <i class="bi bi-pencil-square"></i>
+                                                    </button>
+                                                    <% if (userRole === 'superadmin') { %>
+                                                    <form method="POST" action="/dashboard/transactions/order/delete/<%= order.id %>" class="d-inline" onsubmit="return confirm('Delete this order?')">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                            <i class="bi bi-trash3"></i>
+                                                        </button>
+                                                    </form>
+                                                    <% } %>
+                                                </td>
+                                                <% } %>
                                             </tr>
                                             <% }) %>
                                                 <% } else { %>
                                                     <tr>
-                                                        <td colspan="7" class="text-center py-4">No recent transactions
-                                                            found.</td>
+                                                        <td colspan="<%= (userRole === 'superadmin' || userRole === 'admin') ? '8' : '7' %>" class="text-center py-4">No recent transactions found.</td>
                                                     </tr>
                                                     <% } %>
                                 </tbody>
@@ -242,8 +268,13 @@
 
                 <!-- Recent Vazhipadu Bookings -->
                 <div class="card stat-card mt-4">
-                    <div class="card-header bg-white py-3">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Recent Vazhipadu Bookings (WhatsApp)</h5>
+                        <% if (userRole === 'superadmin' || userRole === 'admin') { %>
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addVazhipaduModal">
+                            <i class="bi bi-plus-circle me-1"></i> Add
+                        </button>
+                        <% } %>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -259,6 +290,9 @@
                                         <th>Amount</th>
                                         <th>Mode</th>
                                         <th>Status</th>
+                                        <% if (userRole === 'superadmin' || userRole === 'admin') { %>
+                                        <th class="text-center">Actions</th>
+                                        <% } %>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -297,11 +331,35 @@
                                                             </span>
                                                             <% } %>
                                                 </td>
+                                                <% if (userRole === 'superadmin' || userRole === 'admin') { %>
+                                                <td class="text-center">
+                                                    <button class="btn btn-sm btn-outline-primary edit-vazhipadu-btn"
+                                                            data-id="<%= v.id %>"
+                                                            data-order_id="<%= v.order_id %>"
+                                                            data-phone_number="<%= v.phone_number %>"
+                                                            data-vazhipadu_name="<%= v.vazhipadu_name %>"
+                                                            data-devotee_name="<%= v.devotee_name %>"
+                                                            data-nakshathram="<%= v.nakshathram %>"
+                                                            data-performing_date="<%= v.performing_date %>"
+                                                            data-amount="<%= v.amount %>"
+                                                            data-payment_mode="<%= v.payment_mode %>"
+                                                            data-status="<%= v.status %>">
+                                                        <i class="bi bi-pencil-square"></i>
+                                                    </button>
+                                                    <% if (userRole === 'superadmin') { %>
+                                                    <form method="POST" action="/dashboard/transactions/vazhipadu/delete/<%= v.id %>" class="d-inline" onsubmit="return confirm('Delete this booking?')">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                            <i class="bi bi-trash3"></i>
+                                                        </button>
+                                                    </form>
+                                                    <% } %>
+                                                </td>
+                                                <% } %>
                                             </tr>
                                             <% }) %>
                                                 <% } else { %>
                                                     <tr>
-                                                        <td colspan="9" class="text-center py-4">No recent vazhipadu
+                                                        <td colspan="<%= (userRole === 'superadmin' || userRole === 'admin') ? '10' : '9' %>" class="text-center py-4">No recent vazhipadu
                                                             bookings found.</td>
                                                     </tr>
                                                     <% } %>
@@ -313,8 +371,13 @@
 
                 <!-- Recent Donations -->
                 <div class="card stat-card mt-4">
-                    <div class="card-header bg-white py-3">
+                    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Recent Donations (WhatsApp)</h5>
+                        <% if (userRole === 'superadmin' || userRole === 'admin') { %>
+                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addDonationModal">
+                            <i class="bi bi-plus-circle me-1"></i> Add
+                        </button>
+                        <% } %>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -328,6 +391,9 @@
                                         <th>Mode</th>
                                         <th>Status</th>
                                         <th>Date</th>
+                                        <% if (userRole === 'superadmin' || userRole === 'admin') { %>
+                                        <th class="text-center">Actions</th>
+                                        <% } %>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -360,11 +426,33 @@
                                                 <td>
                                                     <%= d.created_at %>
                                                 </td>
+                                                <% if (userRole === 'superadmin' || userRole === 'admin') { %>
+                                                <td class="text-center">
+                                                    <button class="btn btn-sm btn-outline-primary edit-donation-btn"
+                                                            data-id="<%= d.id %>"
+                                                            data-order_id="<%= d.order_id %>"
+                                                            data-phone_number="<%= d.phone_number %>"
+                                                            data-whatsapp_name="<%= d.whatsapp_name || '' %>"
+                                                            data-amount="<%= d.amount %>"
+                                                            data-payment_mode="<%= d.payment_mode %>"
+                                                            data-status="<%= d.status %>"
+                                                            data-purpose="<%= d.purpose || '' %>">
+                                                        <i class="bi bi-pencil-square"></i>
+                                                    </button>
+                                                    <% if (userRole === 'superadmin') { %>
+                                                    <form method="POST" action="/dashboard/transactions/donation/delete/<%= d.id %>" class="d-inline" onsubmit="return confirm('Delete this donation?')">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                            <i class="bi bi-trash3"></i>
+                                                        </button>
+                                                    </form>
+                                                    <% } %>
+                                                </td>
+                                                <% } %>
                                             </tr>
                                             <% }) %>
                                                 <% } else { %>
                                                     <tr>
-                                                        <td colspan="7" class="text-center py-4">No recent donations
+                                                        <td colspan="<%= (userRole === 'superadmin' || userRole === 'admin') ? '8' : '7' %>" class="text-center py-4">No recent donations
                                                             found.</td>
                                                     </tr>
                                                     <% } %>
@@ -377,6 +465,198 @@
             </div>
         </div>
     </div>
+
+    <!-- ── Modals (only rendered for superadmin/admin) ── -->
+    <% if (userRole === 'superadmin' || userRole === 'admin') { %>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Order Add/Edit
+        const orderForm = document.getElementById('orderForm');
+        const orderModalTitle = document.getElementById('orderModalTitle');
+        const orderFormAction = document.getElementById('orderFormAction');
+        document.querySelectorAll('.edit-order-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('orderIdField').value = btn.dataset.id || '';
+                document.getElementById('orderOrderId').value = btn.dataset.order_id || '';
+                document.getElementById('orderAmount').value = btn.dataset.amount || '';
+                document.getElementById('orderPayerName').value = btn.dataset.payer_name || '';
+                document.getElementById('orderPayerHandle').value = btn.dataset.payer_handle || '';
+                document.getElementById('orderStatus').value = btn.dataset.status || 'PENDING';
+                document.getElementById('orderUtr').value = btn.dataset.utr || '';
+                orderFormAction.value = btn.dataset.id ? `/dashboard/transactions/order/update/${btn.dataset.id}` : '/dashboard/transactions/order/create';
+                orderModalTitle.textContent = btn.dataset.id ? 'Edit Order' : 'Add Order';
+            });
+        });
+
+        // Vazhipadu Add/Edit
+        const vazhipaduForm = document.getElementById('vazhipaduForm');
+        const vazhipaduModalTitle = document.getElementById('vazhipaduModalTitle');
+        const vazhipaduFormAction = document.getElementById('vazhipaduFormAction');
+        document.querySelectorAll('.edit-vazhipadu-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('vazhipaduIdField').value = btn.dataset.id || '';
+                document.getElementById('vazhipaduOrderId').value = btn.dataset.order_id || '';
+                document.getElementById('vazhipaduPhone').value = btn.dataset.phone_number || '';
+                document.getElementById('vazhipaduName').value = btn.dataset.vazhipadu_name || '';
+                document.getElementById('vazhipaduDevotee').value = btn.dataset.devotee_name || '';
+                document.getElementById('vazhipaduNakshathram').value = btn.dataset.nakshathram || '';
+                document.getElementById('vazhipaduDate').value = btn.dataset.performing_date || '';
+                document.getElementById('vazhipaduAmount').value = btn.dataset.amount || '';
+                document.getElementById('vazhipaduMode').value = btn.dataset.payment_mode || 'COUNTER';
+                document.getElementById('vazhipaduStatus').value = btn.dataset.status || 'PENDING';
+                vazhipaduFormAction.value = btn.dataset.id ? `/dashboard/transactions/vazhipadu/update/${btn.dataset.id}` : '/dashboard/transactions/vazhipadu/create';
+                vazhipaduModalTitle.textContent = btn.dataset.id ? 'Edit Vazhipadu' : 'Add Vazhipadu';
+            });
+        });
+
+        // Donation Add/Edit
+        const donationForm = document.getElementById('donationForm');
+        const donationModalTitle = document.getElementById('donationModalTitle');
+        const donationFormAction = document.getElementById('donationFormAction');
+        document.querySelectorAll('.edit-donation-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('donationIdField').value = btn.dataset.id || '';
+                document.getElementById('donationOrderId').value = btn.dataset.order_id || '';
+                document.getElementById('donationPhone').value = btn.dataset.phone_number || '';
+                document.getElementById('donationWhatsappName').value = btn.dataset.whatsapp_name || '';
+                document.getElementById('donationAmount').value = btn.dataset.amount || '';
+                document.getElementById('donationMode').value = btn.dataset.payment_mode || 'COUNTER';
+                document.getElementById('donationStatus').value = btn.dataset.status || 'PENDING';
+                document.getElementById('donationPurpose').value = btn.dataset.purpose || '';
+                donationFormAction.value = btn.dataset.id ? `/dashboard/transactions/donation/update/${btn.dataset.id}` : '/dashboard/transactions/donation/create';
+                donationModalTitle.textContent = btn.dataset.id ? 'Edit Donation' : 'Add Donation';
+            });
+        });
+    </script>
+
+    <!-- Order Modal -->
+    <div class="modal fade" id="addOrderModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="orderForm" method="POST" action="/dashboard/transactions/order/create">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="orderModalTitle">Add Order</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="orderIdField" name="id">
+                        <input type="hidden" id="orderFormAction" name="_action">
+                        <div class="mb-2"><label class="form-label">Order ID *</label>
+                            <input type="text" class="form-control" id="orderOrderId" name="order_id" required></div>
+                        <div class="mb-2"><label class="form-label">Amount *</label>
+                            <input type="number" step="0.01" class="form-control" id="orderAmount" name="amount" required></div>
+                        <div class="mb-2"><label class="form-label">Payer Name</label>
+                            <input type="text" class="form-control" id="orderPayerName" name="payer_name"></div>
+                        <div class="mb-2"><label class="form-label">Payment App</label>
+                            <input type="text" class="form-control" id="orderPayerHandle" name="payer_handle"></div>
+                        <div class="mb-2"><label class="form-label">Status</label>
+                            <select class="form-select" id="orderStatus" name="status">
+                                <option value="PENDING">PENDING</option>
+                                <option value="SUCCESS">SUCCESS</option>
+                                <option value="FAILURE">FAILURE</option>
+                            </select></div>
+                        <div class="mb-2"><label class="form-label">UTR</label>
+                            <input type="text" class="form-control" id="orderUtr" name="utr"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vazhipadu Modal -->
+    <div class="modal fade" id="addVazhipaduModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="vazhipaduForm" method="POST" action="/dashboard/transactions/vazhipadu/create">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="vazhipaduModalTitle">Add Vazhipadu</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="vazhipaduIdField" name="id">
+                        <input type="hidden" id="vazhipaduFormAction" name="_action">
+                        <div class="mb-2"><label class="form-label">Order ID *</label>
+                            <input type="text" class="form-control" id="vazhipaduOrderId" name="order_id" required></div>
+                        <div class="mb-2"><label class="form-label">Phone</label>
+                            <input type="text" class="form-control" id="vazhipaduPhone" name="phone_number"></div>
+                        <div class="mb-2"><label class="form-label">Vazhipadu Name</label>
+                            <input type="text" class="form-control" id="vazhipaduName" name="vazhipadu_name"></div>
+                        <div class="mb-2"><label class="form-label">Devotee Name</label>
+                            <input type="text" class="form-control" id="vazhipaduDevotee" name="devotee_name"></div>
+                        <div class="mb-2"><label class="form-label">Nakshathram</label>
+                            <input type="text" class="form-control" id="vazhipaduNakshathram" name="nakshathram"></div>
+                        <div class="mb-2"><label class="form-label">Performing Date</label>
+                            <input type="date" class="form-control" id="vazhipaduDate" name="performing_date"></div>
+                        <div class="mb-2"><label class="form-label">Amount *</label>
+                            <input type="number" step="0.01" class="form-control" id="vazhipaduAmount" name="amount" required></div>
+                        <div class="mb-2"><label class="form-label">Mode</label>
+                            <select class="form-select" id="vazhipaduMode" name="payment_mode">
+                                <option value="COUNTER">COUNTER</option>
+                                <option value="UPI">UPI</option>
+                            </select></div>
+                        <div class="mb-2"><label class="form-label">Status</label>
+                            <select class="form-select" id="vazhipaduStatus" name="status">
+                                <option value="PENDING">PENDING</option>
+                                <option value="CONFIRMED">CONFIRMED</option>
+                            </select></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Donation Modal -->
+    <div class="modal fade" id="addDonationModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form id="donationForm" method="POST" action="/dashboard/transactions/donation/create">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="donationModalTitle">Add Donation</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="donationIdField" name="id">
+                        <input type="hidden" id="donationFormAction" name="_action">
+                        <div class="mb-2"><label class="form-label">Order ID *</label>
+                            <input type="text" class="form-control" id="donationOrderId" name="order_id" required></div>
+                        <div class="mb-2"><label class="form-label">Phone</label>
+                            <input type="text" class="form-control" id="donationPhone" name="phone_number"></div>
+                        <div class="mb-2"><label class="form-label">WhatsApp Name</label>
+                            <input type="text" class="form-control" id="donationWhatsappName" name="whatsapp_name"></div>
+                        <div class="mb-2"><label class="form-label">Amount *</label>
+                            <input type="number" step="0.01" class="form-control" id="donationAmount" name="amount" required></div>
+                        <div class="mb-2"><label class="form-label">Mode</label>
+                            <select class="form-select" id="donationMode" name="payment_mode">
+                                <option value="COUNTER">COUNTER</option>
+                                <option value="UPI">UPI</option>
+                            </select></div>
+                        <div class="mb-2"><label class="form-label">Status</label>
+                            <select class="form-select" id="donationStatus" name="status">
+                                <option value="PENDING">PENDING</option>
+                                <option value="CONFIRMED">CONFIRMED</option>
+                            </select></div>
+                        <div class="mb-2"><label class="form-label">Purpose</label>
+                            <input type="text" class="form-control" id="donationPurpose" name="purpose"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <% } else { %>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <% } %>
 </body>
 
 </html>
