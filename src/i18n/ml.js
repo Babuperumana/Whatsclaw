@@ -174,7 +174,7 @@ module.exports = {
         yamagandam_label: '⚠️ യമഗണ്ഡം: {time}',
         gulika_label: '⚠️ ഗുളിക: {time}',
         vishesham_label: '🎉 പ്രത്യേകം: {events}',
-        footer: '\n🙏െം! 🙏'
+        footer: '\n🙏 എല്ലാവർക്കും ദൈവാനുഗ്രഹം ഉണ്ടാകട്ടെ ! 🙏'
     },
 
     donation: {
