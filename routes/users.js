@@ -101,8 +101,8 @@ router.post('/create', async (req, res) => {
 
         const result = await new Promise((resolve, reject) => {
             db.run(
-                `INSERT INTO users (name, mobile, email, password, role, user_token, acc_ban, acc_lock, aadhaar, pin, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [name.trim(), mobile.trim(), email.trim(), hashedPassword, role, userToken, 'off', 0, '000000000000', '0000', 'N/A'],
+                `INSERT INTO users (name, mobile, email, password, role, user_token, acc_ban, acc_lock, aadhaar, pan, pin, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [name.trim(), mobile.trim(), email.trim(), hashedPassword, role, userToken, 'off', 0, '000000000000', 'NA', '0000', 'N/A'],
                 function (err) {
                     if (err) reject(err);
                     else resolve(this);
