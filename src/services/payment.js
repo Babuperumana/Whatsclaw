@@ -14,7 +14,7 @@ function createPayment({ getXbyY, setXbyY }) {
             const user_token = adminUsers[0].user_token;
             const user_id = adminUsers[0].id;
 
-            const bharatpe_tokens = await getXbyY('SELECT Upiid, merchantId FROM bharatpe_tokens WHERE user_token = ?', [user_token]);
+            const bharatpe_tokens = await getXbyY('SELECT Upiid, merchantId FROM bharatpe_tokens WHERE user_id = ? LIMIT 1', [user_id]);
             const upi_id = bharatpe_tokens.length > 0 ? bharatpe_tokens[0].Upiid : 'admin@upi';
 
             const pay_token = crypto.randomBytes(4).toString('hex');

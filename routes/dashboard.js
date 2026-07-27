@@ -50,9 +50,9 @@ router.get('/', async (req, res) => {
         const recentOrders = await getXbyY(db, `SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC LIMIT 10`, [user.user_id]);
 
         // Total counts for auto-generating order IDs in the Add modals
-        const orderCountRow = await getXbyYOne(db, `SELECT COUNT(*) as cnt FROM orders`);
-        const vazhipaduCountRow = await getXbyYOne(db, `SELECT COUNT(*) as cnt FROM vazhipadu_bookings`);
-        const donationCountRow = await getXbyYOne(db, `SELECT COUNT(*) as cnt FROM donations_payment_details`);
+        const orderCountRow = (await getXbyY(db, `SELECT COUNT(*) as cnt FROM orders`))[0];
+        const vazhipaduCountRow = (await getXbyY(db, `SELECT COUNT(*) as cnt FROM vazhipadu_bookings`))[0];
+        const donationCountRow = (await getXbyY(db, `SELECT COUNT(*) as cnt FROM donations_payment_details`))[0];
 
         // Recent Vazhipadu Bookings (all users - shared temple data)
         const recentVazhipadu = await getXbyY(db, `SELECT * FROM vazhipadu_bookings ORDER BY id DESC LIMIT 10`);
