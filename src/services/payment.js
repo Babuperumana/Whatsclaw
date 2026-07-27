@@ -9,7 +9,8 @@ function createPayment({ getXbyY, setXbyY }) {
     // Caller provides the order_id so it can be a short sequential ID (V###### / D######).
     async function generateUPIPayment(jid, amount, sock, order_id, callbackSuccess, language) {
         try {
-            const adminUsers = await getXbyY('SELECT user_token, id FROM users WHERE role = "admin" LIMIT 1');
+            // Find the user who has BharatPe configured (stable, role-agnostic).
+            const adminUsers = await getXbyY(`SELECT u.user_token, u.id FROM users u INNER JOIN bharatpe_tokens b ON b.user_id = u.id LIMIT 1`);
             if (adminUsers.length === 0) return sock.sendMessage(jid, { text: t(language, 'payment.admin_error') });
             const user_token = adminUsers[0].user_token;
             const user_id = adminUsers[0].id;
