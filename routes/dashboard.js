@@ -49,6 +49,11 @@ router.get('/', async (req, res) => {
         // Recent orders (last 10)
         const recentOrders = await getXbyY(db, `SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC LIMIT 10`, [user.user_id]);
 
+        // Total counts for auto-generating order IDs in the Add modals
+        const orderCountRow = await getXbyYOne(db, `SELECT COUNT(*) as cnt FROM orders`);
+        const vazhipaduCountRow = await getXbyYOne(db, `SELECT COUNT(*) as cnt FROM vazhipadu_bookings`);
+        const donationCountRow = await getXbyYOne(db, `SELECT COUNT(*) as cnt FROM donations_payment_details`);
+
         // Recent Vazhipadu Bookings (all users - shared temple data)
         const recentVazhipadu = await getXbyY(db, `SELECT * FROM vazhipadu_bookings ORDER BY id DESC LIMIT 10`);
 
@@ -68,7 +73,10 @@ router.get('/', async (req, res) => {
             },
             recentOrders,
             recentVazhipadu,
-            recentDonations
+            recentDonations,
+            ordersTotals: { total_count: orderCountRow ? orderCountRow.cnt : 0 },
+            vazhiTotals: { total_count: vazhipaduCountRow ? vazhipaduCountRow.cnt : 0 },
+            donTotals: { total_count: donationCountRow ? donationCountRow.cnt : 0 }
         });
 
     } catch (err) {

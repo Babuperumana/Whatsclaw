@@ -206,6 +206,8 @@
                                                 <% if (typeof userRole !== 'undefined' && (userRole === 'superadmin' || userRole === 'admin')) { %>
                                                 <td class="text-center">
                                                     <button class="btn btn-sm btn-outline-primary edit-order-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#addOrderModal"
                                                             data-id="<%= order.id %>"
                                                             data-order_id="<%= order.order_id %>"
                                                             data-amount="<%= order.amount %>"
@@ -321,6 +323,8 @@
                                                 <% if (typeof userRole !== 'undefined' && (userRole === 'superadmin' || userRole === 'admin')) { %>
                                                 <td class="text-center">
                                                     <button class="btn btn-sm btn-outline-primary edit-vazhipadu-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#addVazhipaduModal"
                                                             data-id="<%= v.id %>"
                                                             data-order_id="<%= v.order_id %>"
                                                             data-phone_number="<%= v.phone_number %>"
@@ -435,6 +439,8 @@
                                                 <% if (typeof userRole !== 'undefined' && (userRole === 'superadmin' || userRole === 'admin')) { %>
                                                 <td class="text-center">
                                                     <button class="btn btn-sm btn-outline-primary edit-donation-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#addDonationModal"
                                                             data-id="<%= d.id %>"
                                                             data-order_id="<%= d.order_id %>"
                                                             data-phone_number="<%= d.phone_number %>"
@@ -567,12 +573,18 @@
                         <input type="hidden" id="orderIdField" name="id">
                         <div class="mb-2"><label class="form-label">Order ID *</label>
                             <input type="text" class="form-control" id="orderOrderId" name="order_id" required></div>
+                        <input type="hidden" id="orderSeq" value="<%= (ordersTotals.total_count || 0) + 1 %>">
                         <div class="mb-2"><label class="form-label">Amount *</label>
                             <input type="number" step="0.01" class="form-control" id="orderAmount" name="amount" required></div>
                         <div class="mb-2"><label class="form-label">Payer Name</label>
                             <input type="text" class="form-control" id="orderPayerName" name="payer_name"></div>
                         <div class="mb-2"><label class="form-label">Payment App</label>
                             <input type="text" class="form-control" id="orderPayerHandle" name="payer_handle"></div>
+                        <div class="mb-2"><label class="form-label">Payment Mode</label>
+                            <select class="form-select" id="orderMode" name="payment_mode">
+                                <option value="UPI">UPI</option>
+                                <option value="COUNTER">Counter</option>
+                            </select></div>
                         <div class="mb-2"><label class="form-label">Status</label>
                             <select class="form-select" id="orderStatus" name="status">
                                 <option value="PENDING">PENDING</option>
@@ -603,6 +615,7 @@
                         <input type="hidden" id="vazhipaduIdField" name="id">
                         <div class="mb-2"><label class="form-label">Order ID *</label>
                             <input type="text" class="form-control" id="vazhipaduOrderId" name="order_id" required></div>
+                        <input type="hidden" id="vazhipaduSeq" value="<%= (vazhiTotals.total_count || 0) + 1 %>">
                         <div class="mb-2"><label class="form-label">Phone</label>
                             <input type="text" class="form-control" id="vazhipaduPhone" name="phone_number"></div>
                         <div class="mb-2"><label class="form-label">Vazhipadu Name</label>

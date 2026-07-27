@@ -476,62 +476,116 @@
     <% if (userRole === 'superadmin' || userRole === 'admin') { %>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // When opening the modal in Add mode, auto-generate a sequential order_id
+        // based on the selected payment mode, matching the WhatsApp flow prefixes.
+        function autoGenOrderId() {
+            const mode = document.getElementById('orderMode').value;
+            const prefix = mode === 'COUNTER' ? 'CV' : 'V';
+            const seq = document.getElementById('orderSeq').value;
+            document.getElementById('orderOrderId').value = prefix + String(seq).padStart(6, '0');
+        }
+
         // Order Add/Edit
         const orderForm = document.getElementById('orderForm');
         const orderModalTitle = document.getElementById('orderModalTitle');
-        const orderFormAction = document.getElementById('orderFormAction');
         document.querySelectorAll('.edit-order-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.getElementById('orderIdField').value = btn.dataset.id || '';
-                document.getElementById('orderOrderId').value = btn.dataset.order_id || '';
-                document.getElementById('orderAmount').value = btn.dataset.amount || '';
-                document.getElementById('orderPayerName').value = btn.dataset.payer_name || '';
-                document.getElementById('orderPayerHandle').value = btn.dataset.payer_handle || '';
-                document.getElementById('orderStatus').value = btn.dataset.status || 'PENDING';
-                document.getElementById('orderUtr').value = btn.dataset.utr || '';
-                orderFormAction.value = btn.dataset.id ? `/dashboard/transactions/order/update/${btn.dataset.id}` : '/dashboard/transactions/order/create';
-                orderModalTitle.textContent = btn.dataset.id ? 'Edit Order' : 'Add Order';
+                if (btn.dataset.id) {
+                    // Edit mode: populate fields and route to update
+                    document.getElementById('orderIdField').value = btn.dataset.id;
+                    document.getElementById('orderOrderId').value = btn.dataset.order_id || '';
+                    document.getElementById('orderAmount').value = btn.dataset.amount || '';
+                    document.getElementById('orderPayerName').value = btn.dataset.payer_name || '';
+                    document.getElementById('orderPayerHandle').value = btn.dataset.payer_handle || '';
+                    document.getElementById('orderStatus').value = btn.dataset.status || 'PENDING';
+                    document.getElementById('orderUtr').value = btn.dataset.utr || '';
+                    orderForm.action = '/dashboard/transactions/order/update/' + btn.dataset.id;
+                    orderModalTitle.textContent = 'Edit Order';
+                } else {
+                    // Add mode: reset and route to create
+                    orderForm.reset();
+                    document.getElementById('orderIdField').value = '';
+                    autoGenOrderId();
+                    orderForm.action = '/dashboard/transactions/order/create';
+                    orderModalTitle.textContent = 'Add Order';
+                }
             });
+        });
+        // Regenerate order_id if payment mode changes in Add mode
+        document.getElementById('orderMode').addEventListener('change', function() {
+            if (!document.getElementById('orderIdField').value) autoGenOrderId();
         });
 
         // Vazhipadu Add/Edit
         const vazhipaduForm = document.getElementById('vazhipaduForm');
         const vazhipaduModalTitle = document.getElementById('vazhipaduModalTitle');
-        const vazhipaduFormAction = document.getElementById('vazhipaduFormAction');
         document.querySelectorAll('.edit-vazhipadu-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.getElementById('vazhipaduIdField').value = btn.dataset.id || '';
-                document.getElementById('vazhipaduOrderId').value = btn.dataset.order_id || '';
-                document.getElementById('vazhipaduPhone').value = btn.dataset.phone_number || '';
-                document.getElementById('vazhipaduName').value = btn.dataset.vazhipadu_name || '';
-                document.getElementById('vazhipaduDevotee').value = btn.dataset.devotee_name || '';
-                document.getElementById('vazhipaduNakshathram').value = btn.dataset.nakshathram || '';
-                document.getElementById('vazhipaduDate').value = btn.dataset.performing_date || '';
-                document.getElementById('vazhipaduAmount').value = btn.dataset.amount || '';
-                document.getElementById('vazhipaduMode').value = btn.dataset.payment_mode || 'COUNTER';
-                document.getElementById('vazhipaduStatus').value = btn.dataset.status || 'PENDING';
-                vazhipaduFormAction.value = btn.dataset.id ? `/dashboard/transactions/vazhipadu/update/${btn.dataset.id}` : '/dashboard/transactions/vazhipadu/create';
-                vazhipaduModalTitle.textContent = btn.dataset.id ? 'Edit Vazhipadu' : 'Add Vazhipadu';
+                if (btn.dataset.id) {
+                    document.getElementById('vazhipaduIdField').value = btn.dataset.id;
+                    document.getElementById('vazhipaduOrderId').value = btn.dataset.order_id || '';
+                    document.getElementById('vazhipaduPhone').value = btn.dataset.phone_number || '';
+                    document.getElementById('vazhipaduName').value = btn.dataset.vazhipadu_name || '';
+                    document.getElementById('vazhipaduDevotee').value = btn.dataset.devotee_name || '';
+                    document.getElementById('vazhipaduNakshathram').value = btn.dataset.nakshathram || '';
+                    document.getElementById('vazhipaduDate').value = btn.dataset.performing_date || '';
+                    document.getElementById('vazhipaduAmount').value = btn.dataset.amount || '';
+                    document.getElementById('vazhipaduMode').value = btn.dataset.payment_mode || 'COUNTER';
+                    document.getElementById('vazhipaduStatus').value = btn.dataset.status || 'PENDING';
+                    vazhipaduForm.action = '/dashboard/transactions/vazhipadu/update/' + btn.dataset.id;
+                    vazhipaduModalTitle.textContent = 'Edit Vazhipadu';
+                } else {
+                    vazhipaduForm.reset();
+                    document.getElementById('vazhipaduIdField').value = '';
+                    autoGenVazhipaduId();
+                    vazhipaduForm.action = '/dashboard/transactions/vazhipadu/create';
+                    vazhipaduModalTitle.textContent = 'Add Vazhipadu';
+                }
             });
+        });
+        function autoGenVazhipaduId() {
+            const mode = document.getElementById('vazhipaduMode').value;
+            const prefix = mode === 'COUNTER' ? 'CV' : 'V';
+            const seq = document.getElementById('vazhipaduSeq').value;
+            document.getElementById('vazhipaduOrderId').value = prefix + String(seq).padStart(6, '0');
+        }
+        document.getElementById('vazhipaduMode').addEventListener('change', function() {
+            if (!document.getElementById('vazhipaduIdField').value) autoGenVazhipaduId();
         });
 
         // Donation Add/Edit
         const donationForm = document.getElementById('donationForm');
         const donationModalTitle = document.getElementById('donationModalTitle');
-        const donationFormAction = document.getElementById('donationFormAction');
         document.querySelectorAll('.edit-donation-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.getElementById('donationIdField').value = btn.dataset.id || '';
-                document.getElementById('donationOrderId').value = btn.dataset.order_id || '';
-                document.getElementById('donationPhone').value = btn.dataset.phone_number || '';
-                document.getElementById('donationWhatsappName').value = btn.dataset.whatsapp_name || '';
-                document.getElementById('donationAmount').value = btn.dataset.amount || '';
-                document.getElementById('donationMode').value = btn.dataset.payment_mode || 'COUNTER';
-                document.getElementById('donationStatus').value = btn.dataset.status || 'PENDING';
-                document.getElementById('donationPurpose').value = btn.dataset.purpose || '';
-                donationFormAction.value = btn.dataset.id ? `/dashboard/transactions/donation/update/${btn.dataset.id}` : '/dashboard/transactions/donation/create';
-                donationModalTitle.textContent = btn.dataset.id ? 'Edit Donation' : 'Add Donation';
+                if (btn.dataset.id) {
+                    document.getElementById('donationIdField').value = btn.dataset.id;
+                    document.getElementById('donationOrderId').value = btn.dataset.order_id || '';
+                    document.getElementById('donationPhone').value = btn.dataset.phone_number || '';
+                    document.getElementById('donationWhatsappName').value = btn.dataset.whatsapp_name || '';
+                    document.getElementById('donationAmount').value = btn.dataset.amount || '';
+                    document.getElementById('donationMode').value = btn.dataset.payment_mode || 'COUNTER';
+                    document.getElementById('donationStatus').value = btn.dataset.status || 'PENDING';
+                    document.getElementById('donationPurpose').value = btn.dataset.purpose || '';
+                    donationForm.action = '/dashboard/transactions/donation/update/' + btn.dataset.id;
+                    donationModalTitle.textContent = 'Edit Donation';
+                } else {
+                    donationForm.reset();
+                    document.getElementById('donationIdField').value = '';
+                    autoGenDonationId();
+                    donationForm.action = '/dashboard/transactions/donation/create';
+                    donationModalTitle.textContent = 'Add Donation';
+                }
             });
+        });
+        function autoGenDonationId() {
+            const mode = document.getElementById('donationMode').value;
+            const prefix = mode === 'COUNTER' ? 'CD' : 'D';
+            const seq = document.getElementById('donationSeq').value;
+            document.getElementById('donationOrderId').value = prefix + String(seq).padStart(6, '0');
+        }
+        document.getElementById('donationMode').addEventListener('change', function() {
+            if (!document.getElementById('donationIdField').value) autoGenDonationId();
         });
     </script>
 
@@ -546,15 +600,20 @@
                     </div>
                     <div class="modal-body">
                         <input type="hidden" id="orderIdField" name="id">
-                        <input type="hidden" id="orderFormAction" name="_action">
                         <div class="mb-2"><label class="form-label">Order ID *</label>
                             <input type="text" class="form-control" id="orderOrderId" name="order_id" required></div>
+                        <input type="hidden" id="orderSeq" value="<%= (ordersTotals.total_count || 0) + 1 %>">
                         <div class="mb-2"><label class="form-label">Amount *</label>
                             <input type="number" step="0.01" class="form-control" id="orderAmount" name="amount" required></div>
                         <div class="mb-2"><label class="form-label">Payer Name</label>
                             <input type="text" class="form-control" id="orderPayerName" name="payer_name"></div>
                         <div class="mb-2"><label class="form-label">Payment App</label>
                             <input type="text" class="form-control" id="orderPayerHandle" name="payer_handle"></div>
+                        <div class="mb-2"><label class="form-label">Payment Mode</label>
+                            <select class="form-select" id="orderMode" name="payment_mode">
+                                <option value="UPI">UPI</option>
+                                <option value="COUNTER">Counter</option>
+                            </select></div>
                         <div class="mb-2"><label class="form-label">Status</label>
                             <select class="form-select" id="orderStatus" name="status">
                                 <option value="PENDING">PENDING</option>
@@ -584,9 +643,9 @@
                     </div>
                     <div class="modal-body">
                         <input type="hidden" id="vazhipaduIdField" name="id">
-                        <input type="hidden" id="vazhipaduFormAction" name="_action">
                         <div class="mb-2"><label class="form-label">Order ID *</label>
                             <input type="text" class="form-control" id="vazhipaduOrderId" name="order_id" required></div>
+                        <input type="hidden" id="vazhipaduSeq" value="<%= (vazhiTotals.total_count || 0) + 1 %>">
                         <div class="mb-2"><label class="form-label">Phone</label>
                             <input type="text" class="form-control" id="vazhipaduPhone" name="phone_number"></div>
                         <div class="mb-2"><label class="form-label">Vazhipadu Name</label>
@@ -630,9 +689,9 @@
                     </div>
                     <div class="modal-body">
                         <input type="hidden" id="donationIdField" name="id">
-                        <input type="hidden" id="donationFormAction" name="_action">
                         <div class="mb-2"><label class="form-label">Order ID *</label>
                             <input type="text" class="form-control" id="donationOrderId" name="order_id" required></div>
+                        <input type="hidden" id="donationSeq" value="<%= (donTotals.total_count || 0) + 1 %>">
                         <div class="mb-2"><label class="form-label">Phone</label>
                             <input type="text" class="form-control" id="donationPhone" name="phone_number"></div>
                         <div class="mb-2"><label class="form-label">WhatsApp Name</label>

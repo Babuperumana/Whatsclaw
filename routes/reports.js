@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { requireAuth } = require('../middleware/auth');
 const { sendWhatsAppMessage, ADMIN_NOTIFY_JID } = require('../whatsappBot');
+const { generateOrderId } = require('../src/utils/orderId');
 
 // Helpers to wrap SQLite queries in Promises
 const getXbyY = (db, query, params = []) => {
@@ -312,15 +313,19 @@ router.post('/transactions/order/create', async (req, res) => {
 
     try {
         enforcePermission(userRole, 'create');
-        const { order_id, amount, payer_name, payer_handle, status, utr } = req.body;
-        if (!order_id || !amount) {
+        const { order_id, amount, payer_name, payer_handle, status, utr, payment_mode } = req.body;
+        if (!amount) {
             return res.redirect('/dashboard/transactions');
         }
+        // Auto-generate a sequential order_id if not provided (matches the WhatsApp flow).
+        const finalOrderId = (order_id && order_id.trim())
+            ? order_id.trim()
+            : await generateOrderId(payment_mode === 'COUNTER' ? 'CV' : 'V', getXbyY, setXbyY);
         const validStatus = ['SUCCESS', 'PENDING', 'FAILURE'];
         const finalStatus = validStatus.includes(status) ? status : 'PENDING';
         await setXbyY(db,
             `INSERT INTO orders (order_id, amount, payer_name, payer_handle, status, utr, create_date, user_id) VALUES (?, ?, ?, ?, ?, ?, datetime('now'), ?)`,
-            [order_id, amount, payer_name || null, payer_handle || null, finalStatus, utr || null, user.user_id]
+            [finalOrderId, amount, payer_name || null, payer_handle || null, finalStatus, utr || null, user.user_id]
         );
         res.redirect('/dashboard/transactions');
     } catch (err) {
@@ -382,12 +387,15 @@ router.post('/transactions/vazhipadu/create', async (req, res) => {
     try {
         enforcePermission((user.role || 'User').toLowerCase(), 'create');
         const { order_id, phone_number, vazhipadu_name, devotee_name, nakshathram, performing_date, amount, payment_mode, status } = req.body;
-        if (!order_id || !amount) {
+        if (!amount) {
             return res.redirect('/dashboard/transactions');
         }
+        const finalOrderId = (order_id && order_id.trim())
+            ? order_id.trim()
+            : await generateOrderId(payment_mode === 'COUNTER' ? 'CV' : 'V', getXbyY, setXbyY);
         await setXbyY(db,
             `INSERT INTO vazhipadu_bookings (order_id, phone_number, vazhipadu_name, devotee_name, nakshathram, performing_date, amount, payment_mode, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-            [order_id, phone_number || '', vazhipadu_name || '', devotee_name || '', nakshathram || '', performing_date || '', amount, payment_mode || 'COUNTER', status || 'PENDING']
+            [finalOrderId, phone_number || '', vazhipadu_name || '', devotee_name || '', nakshathram || '', performing_date || '', amount, payment_mode || 'COUNTER', status || 'PENDING']
         );
         res.redirect('/dashboard/transactions');
     } catch (err) {
@@ -447,12 +455,15 @@ router.post('/transactions/donation/create', async (req, res) => {
     try {
         enforcePermission((user.role || 'User').toLowerCase(), 'create');
         const { order_id, phone_number, amount, payment_mode, status, whatsapp_name, purpose } = req.body;
-        if (!order_id || !amount) {
+        if (!amount) {
             return res.redirect('/dashboard/transactions');
         }
+        const finalOrderId = (order_id && order_id.trim())
+            ? order_id.trim()
+            : await generateOrderId(payment_mode === 'COUNTER' ? 'CD' : 'D', getXbyY, setXbyY);
         await setXbyY(db,
             `INSERT INTO donations_payment_details (order_id, phone_number, amount, payment_mode, status, whatsapp_name, purpose, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-            [order_id, phone_number || '', amount, payment_mode || 'COUNTER', status || 'PENDING', whatsapp_name || null, purpose || null]
+            [finalOrderId, phone_number || '', amount, payment_mode || 'COUNTER', status || 'PENDING', whatsapp_name || null, purpose || null]
         );
         res.redirect('/dashboard/transactions');
     } catch (err) {
