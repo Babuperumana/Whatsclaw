@@ -182,6 +182,7 @@
                                     <tr>
                                         <th>Order ID</th>
                                         <th>Amount</th>
+                                        <th>Dakshina</th>
                                         <th>Payer Name</th>
                                         <th>Payment App</th>
                                         <th>Status</th>
@@ -200,6 +201,13 @@
                                                         <%= order.order_id %>
                                                     </span></td>
                                                 <td>₹ <%= order.amount %>
+                                                </td>
+                                                <td>
+                                                    <% if (order.dakshina > 0) { %>
+                                                        <span class="text-success fw-bold">₹ <%= order.dakshina %></span>
+                                                    <% } else { %>
+                                                        -
+                                                    <% } %>
                                                 </td>
                                                 <td>
                                                     <% if (order.payer_name) { %>
@@ -259,7 +267,7 @@
                                             <% }) %>
                                                 <% } else { %>
                                                     <tr>
-                                                        <td colspan="<%= (userRole === 'superadmin' || userRole === 'admin') ? '8' : '7' %>" class="text-center py-4">No recent transactions found.</td>
+                                                        <td colspan="<%= (userRole === 'superadmin' || userRole === 'admin') ? '9' : '8' %>" class="text-center py-4">No recent transactions found.</td>
                                                     </tr>
                                                     <% } %>
                                 </tbody>
@@ -290,6 +298,7 @@
                                         <th>Nakshathram</th>
                                         <th>Date</th>
                                         <th>Amount</th>
+                                        <th>Dakshina</th>
                                         <th>Mode</th>
                                         <th>Status</th>
                                         <% if (userRole === 'superadmin' || userRole === 'admin') { %>
@@ -320,6 +329,13 @@
                                                     <%= v.performing_date %>
                                                 </td>
                                                 <td>₹ <%= v.amount %>
+                                                </td>
+                                                <td>
+                                                    <% if (v.dakshina > 0) { %>
+                                                        <span class="text-success fw-bold">₹ <%= v.dakshina %></span>
+                                                    <% } else { %>
+                                                        -
+                                                    <% } %>
                                                 </td>
                                                 <td><span class="badge bg-secondary">
                                                         <%= v.payment_mode %>
@@ -363,7 +379,7 @@
                                             <% }) %>
                                                 <% } else { %>
                                                     <tr>
-                                                        <td colspan="<%= (userRole === 'superadmin' || userRole === 'admin') ? '10' : '9' %>" class="text-center py-4">No recent vazhipadu
+                                                        <td colspan="<%= (userRole === 'superadmin' || userRole === 'admin') ? '11' : '10' %>" class="text-center py-4">No recent vazhipadu
                                                             bookings found.</td>
                                                     </tr>
                                                     <% } %>

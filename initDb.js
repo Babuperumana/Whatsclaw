@@ -241,6 +241,7 @@ CREATE TABLE vazhipadu_bookings (
   nakshathram TEXT NOT NULL,
   performing_date TEXT NOT NULL,
   amount REAL NOT NULL,
+  dakshina REAL DEFAULT 0,
   payment_mode TEXT NOT NULL, -- 'UPI' or 'COUNTER'
   status TEXT DEFAULT 'PENDING',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP

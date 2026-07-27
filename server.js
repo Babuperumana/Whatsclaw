@@ -88,4 +88,7 @@ app.listen(port, () => {
         `UPDATE site_settings SET brand_name = 'Temple Management' WHERE brand_name IN ('Temple UPI', 'Temple Payment Gateway')`,
         (err) => { if (err) console.error('Failed to update site_settings.brand_name:', err.message); }
     );
+    // Migration: add dakshina columns to orders and vazhipadu_bookings (safe — no-op if already present).
+    db.run(`ALTER TABLE orders ADD COLUMN dakshina REAL DEFAULT 0`, (err) => { if (err && !err.message.includes('duplicate column')) console.error('dakshina migration orders:', err.message); });
+    db.run(`ALTER TABLE vazhipadu_bookings ADD COLUMN dakshina REAL DEFAULT 0`, (err) => { if (err && !err.message.includes('duplicate column')) console.error('dakshina migration vazhipadu_bookings:', err.message); });
 });

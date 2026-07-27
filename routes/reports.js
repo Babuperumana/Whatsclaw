@@ -107,7 +107,9 @@ async function fetchOrders(db, user_id, dateFilter) {
             SUM(CASE WHEN status='SUCCESS' THEN amount ELSE 0 END) as success_amount,
             SUM(CASE WHEN status='PENDING' THEN amount ELSE 0 END) as pending_amount,
             SUM(CASE WHEN status='FAILURE' THEN amount ELSE 0 END) as failure_amount,
-            SUM(amount) as total_amount
+            SUM(amount) as total_amount,
+            SUM(dakshina) as total_dakshina,
+            SUM(CASE WHEN status='SUCCESS' THEN dakshina ELSE 0 END) as success_dakshina
         FROM orders WHERE user_id = ? AND date(create_date) >= ? AND date(create_date) <= ?`,
         [user_id, dateFilter.from, dateFilter.to]
     );
@@ -341,11 +343,11 @@ router.post('/transactions/order/update/:id', async (req, res) => {
 
     try {
         enforcePermission((user.role || 'User').toLowerCase(), 'update');
-        const { amount, payer_name, payer_handle, status, utr } = req.body;
+        const { amount, payer_name, payer_handle, status, utr, dakshina } = req.body;
         const oldRow = await getXbyYOne(db, `SELECT * FROM orders WHERE id = ?`, [req.params.id]);
         await setXbyY(db,
-            `UPDATE orders SET amount = ?, payer_name = ?, payer_handle = ?, status = ?, utr = ? WHERE id = ?`,
-            [amount, payer_name || null, payer_handle || null, status, utr || null, req.params.id]
+            `UPDATE orders SET amount = ?, payer_name = ?, payer_handle = ?, status = ?, utr = ?, dakshina = ? WHERE id = ?`,
+            [amount, payer_name || null, payer_handle || null, status, utr || null, dakshina ? parseFloat(dakshina) : 0, req.params.id]
         );
         if (oldRow && (user.role || '').toLowerCase() !== 'staff') {
             notifyAdminOfEdit({

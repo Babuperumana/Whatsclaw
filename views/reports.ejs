@@ -156,6 +156,21 @@
                         </div>
                     </div>
                 </div>
+                <!-- Dakshina Summary Card -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="card summary-card p-3">
+                            <div class="summary-label">Total Dakshina</div>
+                            <div class="summary-value text-success">₹ <%= (ordersTotals.total_dakshina || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card summary-card p-3">
+                            <div class="summary-label">Dakshina (Paid)</div>
+                            <div class="summary-value text-success">₹ <%= (ordersTotals.success_dakshina || 0).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Transactions Table -->
                 <div class="card stat-card mb-4">
@@ -174,6 +189,7 @@
                                     <tr>
                                         <th>Order ID</th>
                                         <th>Amount</th>
+                                        <th>Dakshina</th>
                                         <th>Payer Name</th>
                                         <th>Payment App</th>
                                         <th>Status</th>
@@ -190,6 +206,13 @@
                                             <tr>
                                                 <td><span class="text-primary fw-bold"><%= order.order_id %></span></td>
                                                 <td>₹ <%= order.amount %></td>
+                                                <td>
+                                                    <% if (order.dakshina > 0) { %>
+                                                        <span class="text-success fw-bold">₹ <%= order.dakshina %></span>
+                                                    <% } else { %>
+                                                        -
+                                                    <% } %>
+                                                </td>
                                                 <td><%= order.payer_name || '-' %></td>
                                                 <td><%- order.payer_handle ? '<span class="badge bg-light text-dark border">' + order.payer_handle + '</span>' : '-' %></td>
                                                 <td>
