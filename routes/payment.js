@@ -236,7 +236,8 @@ router.post('/status.php', async (req, res) => {
             return res.status(404).json({ status: 'ERROR', message: 'Merchant credentials not found' });
         }
         const { merchantId, token: apiToken, cookie: apiCookie } = tokens[0];
-        console.log('[status.php] BharatPe creds found: merchantId:', merchantId);
+        console.log('[status.php] BharatPe creds found: merchantId:', merchantId, 'token_len:', (apiToken || '').length, 'cookie_len:', (apiCookie || '').length);
+        console.log('[status.php] Looking for amount:', session.session_amount, 'upi_id:', session.upi_id, 'order_id:', order_id);
 
         // Call BharatPe transaction API
         const twoDaysAgo = new Date(now - 2 * 24 * 60 * 60 * 1000);
