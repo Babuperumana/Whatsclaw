@@ -27,27 +27,27 @@ router.get('/', async (req, res) => {
         const today = new Date().toISOString().split('T')[0];
 
         // Today's total success amount
-        const successRows = await getXbyY(db, `SELECT IFNULL(SUM(amount), 0) as total FROM orders WHERE status = 'SUCCESS' AND user_id = ? AND date(create_date) = ?`, [user.user_id, today]);
+        const successRows = await getXbyY(db, `SELECT IFNULL(SUM(amount), 0) as total FROM orders WHERE status = 'SUCCESS' AND date(create_date) = ?`, [today]);
         const todaySuccessAmt = successRows[0].total;
 
         // Today's success count
-        const successCountRows = await getXbyY(db, `SELECT COUNT(*) as count FROM orders WHERE status = 'SUCCESS' AND user_id = ? AND date(create_date) = ?`, [user.user_id, today]);
+        const successCountRows = await getXbyY(db, `SELECT COUNT(*) as count FROM orders WHERE status = 'SUCCESS' AND date(create_date) = ?`, [today]);
         const todaySuccessCount = successCountRows[0].count;
 
         // Pending count today
-        const pendingCountRows = await getXbyY(db, `SELECT COUNT(*) as count FROM orders WHERE status = 'PENDING' AND user_id = ? AND date(create_date) = ?`, [user.user_id, today]);
+        const pendingCountRows = await getXbyY(db, `SELECT COUNT(*) as count FROM orders WHERE status = 'PENDING' AND date(create_date) = ?`, [today]);
         const todayPendingCount = pendingCountRows[0].count;
 
         // Failure count today
-        const failureCountRows = await getXbyY(db, `SELECT COUNT(*) as count FROM orders WHERE status = 'FAILURE' AND user_id = ? AND date(create_date) = ?`, [user.user_id, today]);
+        const failureCountRows = await getXbyY(db, `SELECT COUNT(*) as count FROM orders WHERE status = 'FAILURE' AND date(create_date) = ?`, [today]);
         const todayFailureCount = failureCountRows[0].count;
 
         // Total successful amount all time
-        const allSuccessRows = await getXbyY(db, `SELECT IFNULL(SUM(amount), 0) as total FROM orders WHERE status = 'SUCCESS' AND user_id = ?`, [user.user_id]);
+        const allSuccessRows = await getXbyY(db, `SELECT IFNULL(SUM(amount), 0) as total FROM orders WHERE status = 'SUCCESS'`, []);
         const totalSuccessAmt = allSuccessRows[0].total;
 
         // Recent orders (last 10)
-        const recentOrders = await getXbyY(db, `SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC LIMIT 10`, [user.user_id]);
+        const recentOrders = await getXbyY(db, `SELECT * FROM orders ORDER BY id DESC LIMIT 10`);
 
         // Total counts for auto-generating order IDs in the Add modals
         const orderCountRow = (await getXbyY(db, `SELECT COUNT(*) as cnt FROM orders`))[0];
