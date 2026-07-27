@@ -222,7 +222,7 @@ CREATE TABLE users (
 );
 
 INSERT INTO users (id, name, mobile, role, password, email, company, pin, pan, aadhaar, location, user_token, expiry, bharatpe_connected) VALUES
-(1, 'Temple UPI Gateway', '7293959595', 'superadmin', '$2b$10$BpgMgGkW0ZUhBcLu.TQFnuIXuFejsdjijegCEZ1j5TB477bJehuZW', 'babuperumana@gmail.com', 'Temple UPI Gateway', '679326', 'FGHIU5432Q', '987654321021', 'Melattur, Kerala', '3b5a65c28184fb285ab2751307c8908c', '2034-10-01', 'Yes');
+(1, 'Babu Perumana', '7293959595', 'superadmin', '$2b$10$BpgMgGkW0ZUhBcLu.TQFnuIXuFejsdjijegCEZ1j5TB477bJehuZW', 'babuperumana@gmail.com', 'Temple UPI Gateway', '679326', 'FGHIU5432Q', '987654321021', 'Melattur, Kerala', '3b5a65c28184fb285ab2751307c8908c', '2034-10-01', 'Yes');
 
 CREATE TABLE vazhipadu_master (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
