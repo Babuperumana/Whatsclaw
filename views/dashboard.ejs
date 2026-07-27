@@ -235,6 +235,8 @@
                                                 <% if (userRole === 'superadmin' || userRole === 'admin') { %>
                                                 <td class="text-center">
                                                     <button class="btn btn-sm btn-outline-primary edit-order-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#addOrderModal"
                                                             data-id="<%= order.id %>"
                                                             data-order_id="<%= order.order_id %>"
                                                             data-amount="<%= order.amount %>"
@@ -334,6 +336,8 @@
                                                 <% if (userRole === 'superadmin' || userRole === 'admin') { %>
                                                 <td class="text-center">
                                                     <button class="btn btn-sm btn-outline-primary edit-vazhipadu-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#addVazhipaduModal"
                                                             data-id="<%= v.id %>"
                                                             data-order_id="<%= v.order_id %>"
                                                             data-phone_number="<%= v.phone_number %>"
@@ -429,6 +433,8 @@
                                                 <% if (userRole === 'superadmin' || userRole === 'admin') { %>
                                                 <td class="text-center">
                                                     <button class="btn btn-sm btn-outline-primary edit-donation-btn"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#addDonationModal"
                                                             data-id="<%= d.id %>"
                                                             data-order_id="<%= d.order_id %>"
                                                             data-phone_number="<%= d.phone_number %>"
