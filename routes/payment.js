@@ -230,12 +230,11 @@ router.post('/status.php', async (req, res) => {
         }
         const { merchantId, token: apiToken, cookie: apiCookie } = tokens[0];
 
-        // Call BharatPe transaction API
-        const twoDaysAgo = new Date(now - 2 * 24 * 60 * 60 * 1000);
-        const fromDate = twoDaysAgo.toISOString().split('T')[0];
-        const toDate = new Date(now).toISOString().split('T')[0];
-
-        const url = `https://payments-tesseract.bharatpe.in/api/v1/merchant/transactions?module=PAYMENT_QR&merchantId=${encodeURIComponent(merchantId)}&sDate=${encodeURIComponent(fromDate)}&eDate=${encodeURIComponent(toDate)}`;
+        // Call BharatPe transaction API.
+        // NOTE: Do NOT pass sDate/eDate — the date filter causes BharatPe to
+        // return stale data that excludes recent payments. Just module+merchantId
+        // returns the most recent transactions.
+        const url = `https://payments-tesseract.bharatpe.in/api/v1/merchant/transactions?module=PAYMENT_QR&merchantId=${encodeURIComponent(merchantId)}`;
 
         const response = await fetch(url, {
             headers: {
