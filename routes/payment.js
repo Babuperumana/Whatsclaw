@@ -260,35 +260,41 @@ router.post('/status.php', async (req, res) => {
             console.log('[status.php] BharatPe API data keys:', apiData.data ? Object.keys(apiData.data) : 'no data', 'tx count:', apiData.data && apiData.data.transactions ? apiData.data.transactions.length : 0);
 
             if (apiData.data && Array.isArray(apiData.data.transactions)) {
+                const create_ts = new Date(session.create_timestamp.endsWith('Z') ? session.create_timestamp : session.create_timestamp.replace(' ', 'T') + 'Z').getTime();
+                let bestMatch = null;
+                let bestDelta = Infinity;
                 for (const tx of apiData.data.transactions) {
-                    console.log('[status.php] TX:', tx.type, tx.status, 'amount:', tx.amount, 'timestamp:', tx.paymentTimestamp);
                     if (tx.type === 'PAYMENT_RECV' && tx.status === 'SUCCESS') {
                         const amt = parseFloat(tx.amount);
                         const ms = parseInt(tx.paymentTimestamp);
+                        if (Math.abs(amt - session.session_amount) < 0.0001) {
+                            const delta = Math.abs(ms - create_ts);
+                            if (delta < bestDelta) {
+                                bestDelta = delta;
+                                bestMatch = { amt, ms, tx };
+                            }
+                        }
+                    }
+                }
+
+                if (bestMatch) {
+                    console.log('[status.php] Amount match found. Delta from create_ts:', bestDelta, 'ms');
+                    // Accept if within ±30 min of session create time (covers clock skew + late/early payments).
+                    if (bestDelta < 30 * 60 * 1000) {
+                        const { tx } = bestMatch;
                         const bankRef = tx.bankReferenceNo || '';
                         const payerName = tx.payerName || '';
                         const payerHandle = tx.payerHandle || '';
 
-                        const create_ts = new Date(session.create_timestamp.endsWith('Z') ? session.create_timestamp : session.create_timestamp.replace(' ', 'T') + 'Z').getTime();
-
-                        // Match on amount & timeframe
-                        if (
-                            Math.abs(amt - session.session_amount) < 0.0001 &&
-                            create_ts <= ms &&
-                            expire_ts >= ms
-                        ) {
-                            console.log('[status.php] MATCHED! Updating order to SUCCESS, order_id:', order_id);
-                            // Update session: SUCCESS + save UTR
-                            await setXbyY(db, `UPDATE bharatpe_session_information SET status = 'SUCCESS', utr = ? WHERE pay_token = ?`, [bankRef, session.pay_token]);
-
-                            // Update orders table to SUCCESS and update amount to the actual session_amount paid
-                            await setXbyY(db, `UPDATE orders SET status = 'SUCCESS', amount = ?, utr = ?, payer_name = ?, payer_handle = ? WHERE order_id = ?`, [session.session_amount, bankRef, payerName, payerHandle, order_id]);
-
-                            return res.json({ status: 'SUCCESS' });
-                        } else {
-                            console.log('[status.php] No match — amount:', amt, 'vs session:', session.session_amount, 'create_ts:', create_ts, 'ms:', ms, 'expire_ts:', expire_ts);
-                        }
+                        console.log('[status.php] MATCHED! Updating order to SUCCESS, order_id:', order_id);
+                        await setXbyY(db, `UPDATE bharatpe_session_information SET status = 'SUCCESS', utr = ? WHERE pay_token = ?`, [bankRef, session.pay_token]);
+                        await setXbyY(db, `UPDATE orders SET status = 'SUCCESS', amount = ?, utr = ?, payer_name = ?, payer_handle = ? WHERE order_id = ?`, [session.session_amount, bankRef, payerName, payerHandle, order_id]);
+                        return res.json({ status: 'SUCCESS' });
+                    } else {
+                        console.log('[status.php] Amount matched but too far from create_ts (delta:', bestDelta, 'ms > 30 min). Skipping.');
                     }
+                } else {
+                    console.log('[status.php] No amount match for session_amount:', session.session_amount);
                 }
             }
         } else {
