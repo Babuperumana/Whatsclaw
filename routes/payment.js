@@ -278,21 +278,19 @@ router.post('/status.php', async (req, res) => {
                 }
 
                 if (bestMatch) {
-                    console.log('[status.php] Amount match found. Delta from create_ts:', bestDelta, 'ms');
-                    // Accept if within ±30 min of session create time (covers clock skew + late/early payments).
-                    if (bestDelta < 30 * 60 * 1000) {
-                        const { tx } = bestMatch;
-                        const bankRef = tx.bankReferenceNo || '';
-                        const payerName = tx.payerName || '';
-                        const payerHandle = tx.payerHandle || '';
+                    console.log('[status.php] Amount match found. Delta from create_ts:', bestDelta, 'ms — updating to SUCCESS');
+                    // Amount is the unique identifier (unique-amount algorithm). Accept
+                    // the closest match regardless of time delta — BharatPe's clock
+                    // can differ significantly from server time.
+                    const { tx } = bestMatch;
+                    const bankRef = tx.bankReferenceNo || '';
+                    const payerName = tx.payerName || '';
+                    const payerHandle = tx.payerHandle || '';
 
-                        console.log('[status.php] MATCHED! Updating order to SUCCESS, order_id:', order_id);
-                        await setXbyY(db, `UPDATE bharatpe_session_information SET status = 'SUCCESS', utr = ? WHERE pay_token = ?`, [bankRef, session.pay_token]);
-                        await setXbyY(db, `UPDATE orders SET status = 'SUCCESS', amount = ?, utr = ?, payer_name = ?, payer_handle = ? WHERE order_id = ?`, [session.session_amount, bankRef, payerName, payerHandle, order_id]);
-                        return res.json({ status: 'SUCCESS' });
-                    } else {
-                        console.log('[status.php] Amount matched but too far from create_ts (delta:', bestDelta, 'ms > 30 min). Skipping.');
-                    }
+                    console.log('[status.php] MATCHED! Updating order to SUCCESS, order_id:', order_id);
+                    await setXbyY(db, `UPDATE bharatpe_session_information SET status = 'SUCCESS', utr = ? WHERE pay_token = ?`, [bankRef, session.pay_token]);
+                    await setXbyY(db, `UPDATE orders SET status = 'SUCCESS', amount = ?, utr = ?, payer_name = ?, payer_handle = ? WHERE order_id = ?`, [session.session_amount, bankRef, payerName, payerHandle, order_id]);
+                    return res.json({ status: 'SUCCESS' });
                 } else {
                     console.log('[status.php] No amount match for session_amount:', session.session_amount);
                 }
