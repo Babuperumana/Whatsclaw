@@ -3,8 +3,8 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const { requireAuth, requireRole } = require('../middleware/auth');
 
-// Only superadmin can manage users
-router.use(requireRole('superadmin'));
+// Only admin and above can manage users
+router.use(requireRole('admin'));
 
 const getXbyY = (db, query, params = []) => {
     return new Promise((resolve, reject) => {
@@ -35,6 +35,14 @@ const setXbyY = (db, query, params = []) => {
 
 const VALID_ROLES = ['superadmin', 'admin', 'staff'];
 
+// Roles an admin can assign (superadmin excluded unless the user is superadmin)
+function getAssignableRoles(currentUserRole) {
+    if (currentUserRole === 'superadmin') {
+        return VALID_ROLES;
+    }
+    return ['admin', 'staff'];
+}
+
 // GET /dashboard/users - List all users
 router.get('/', async (req, res) => {
     const db = req.db;
@@ -51,7 +59,7 @@ router.get('/', async (req, res) => {
             user,
             userRole: (user.role || 'User').toLowerCase(),
             users,
-            roles: VALID_ROLES,
+            roles: getAssignableRoles((user.role || 'User').toLowerCase()),
             success: req.query.success || null,
             error: req.query.error || null
         });
@@ -64,6 +72,7 @@ router.get('/', async (req, res) => {
 // POST /dashboard/users/create - Create a new user (admin+)
 router.post('/create', async (req, res) => {
     const db = req.db;
+    const currentUserRole = (req.user.role || 'User').toLowerCase();
     const { name, mobile, email, password, role } = req.body;
 
     try {
@@ -73,6 +82,12 @@ router.post('/create', async (req, res) => {
 
         if (!VALID_ROLES.includes(role)) {
             return res.redirect('/dashboard/users?error=' + encodeURIComponent('Invalid role selected.'));
+        }
+
+        // Prevent admins from creating superadmin users
+        const assignable = getAssignableRoles(currentUserRole);
+        if (!assignable.includes(role)) {
+            return res.redirect('/dashboard/users?error=' + encodeURIComponent('You do not have permission to assign that role.'));
         }
 
         // Check if mobile already exists
@@ -106,6 +121,7 @@ router.post('/create', async (req, res) => {
 router.post('/update/:id', async (req, res) => {
     const db = req.db;
     const { id } = req.params;
+    const currentUserRole = (req.user.role || 'User').toLowerCase();
     const { name, mobile, email, role, password } = req.body;
 
     try {
@@ -115,6 +131,12 @@ router.post('/update/:id', async (req, res) => {
 
         if (!VALID_ROLES.includes(role)) {
             return res.redirect('/dashboard/users?error=' + encodeURIComponent('Invalid role selected.'));
+        }
+
+        // Prevent admins from promoting anyone to superadmin
+        const assignable = getAssignableRoles(currentUserRole);
+        if (!assignable.includes(role)) {
+            return res.redirect('/dashboard/users?error=' + encodeURIComponent('You do not have permission to assign that role.'));
         }
 
         // Check if mobile belongs to another user
