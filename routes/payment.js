@@ -258,9 +258,13 @@ router.post('/status.php', async (req, res) => {
         if (response.ok) {
             const apiData = await response.json();
             console.log('[status.php] BharatPe API data keys:', apiData.data ? Object.keys(apiData.data) : 'no data', 'tx count:', apiData.data && apiData.data.transactions ? apiData.data.transactions.length : 0);
+            if (apiData.data && Array.isArray(apiData.data.transactions)) {
+                console.log('[status.php] All tx amounts:', apiData.data.transactions.map(t => `${t.amount}(${t.type}/${t.status})`).join(', '));
+            }
 
             if (apiData.data && Array.isArray(apiData.data.transactions)) {
                 const create_ts = new Date(session.create_timestamp.endsWith('Z') ? session.create_timestamp : session.create_timestamp.replace(' ', 'T') + 'Z').getTime();
+                console.log('[status.php] Recent amounts from BharatPe:', apiData.data.transactions.map(t => `${t.amount}(${t.type})`).join(', '));
                 let bestMatch = null;
                 let bestDelta = Infinity;
                 for (const tx of apiData.data.transactions) {
