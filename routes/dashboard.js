@@ -23,8 +23,11 @@ router.get('/', async (req, res) => {
         const settings = await getXbyY(db, `SELECT * FROM site_settings LIMIT 1`);
         const site = settings.length > 0 ? settings[0] : { brand_name: 'Temple Management' };
 
-        // Fetch dashboard statistics
-        const today = new Date().toISOString().split('T')[0];
+        // Fetch dashboard statistics (use IST date, not UTC)
+        const now = new Date();
+        const istOffset = 5.5 * 60 * 60 * 1000;
+        const istNow = new Date(now.getTime() + istOffset);
+        const today = istNow.toISOString().split('T')[0];
 
         // Today's total success amount
         const successRows = await getXbyY(db, `SELECT IFNULL(SUM(amount), 0) as total FROM orders WHERE status = 'SUCCESS' AND date(create_date) = ?`, [today]);

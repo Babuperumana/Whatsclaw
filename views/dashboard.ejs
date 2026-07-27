@@ -3,6 +3,15 @@
 
 <head>
     <meta charset="utf-8" />
+    <%
+    // Convert UTC timestamp string from DB to IST (UTC+5:30) for display.
+    function toIST(s) {
+        if (!s) return '';
+        const d = new Date(typeof s === 'string' ? (s.endsWith('Z') ? s : s.replace(' ', 'T') + 'Z') : s);
+        if (isNaN(d.getTime())) return s;
+        return new Date(d.getTime() + 5.5 * 60 * 60 * 1000).toISOString().replace('T', ' ').substring(0, 19);
+    }
+    %>
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
     <title>
@@ -238,7 +247,7 @@
                                                     <%= order.utr ? order.utr : '-' %>
                                                 </td>
                                                 <td>
-                                                    <%= order.create_date %>
+                                                    <%= toIST(order.create_date) %>
                                                 </td>
                                                 <% if (userRole === 'superadmin' || userRole === 'admin') { %>
                                                 <td class="text-center">
@@ -444,7 +453,7 @@
                                                             <% } %>
                                                 </td>
                                                 <td>
-                                                    <%= d.created_at %>
+                                                    <%= toIST(d.created_at) %>
                                                 </td>
                                                 <% if (userRole === 'superadmin' || userRole === 'admin') { %>
                                                 <td class="text-center">
