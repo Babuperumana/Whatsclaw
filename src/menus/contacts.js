@@ -21,25 +21,25 @@ const CONTACTS = [
     {
         id: 'CONTACT_COUNTER',
         labelKey: 'contacts.role_counter',
-        name: 'Temple Counter Desk',
-        phone: '+91 90000 00002',
-        whatsapp: '+91 90000 00002',
+        name: 'Sri Krishnan Thravot',
+        phone: '+91 90746 22659',
+        whatsapp: '+91 90746 22659',
         email: 'counter@kaippullitemple.online'
     },
     {
         id: 'CONTACT_PRESIDENT',
         labelKey: 'contacts.role_president',
-        name: 'Sri Krishnan Nair',
-        phone: '+91 90000 00003',
-        whatsapp: '+91 90000 00003',
+        name: 'Sri Ajeesh',
+        phone: '+91 99468 44987',
+        whatsapp: '+91 99468 44987',
         email: 'president@kaippullitemple.online'
     },
     {
         id: 'CONTACT_SECRETARY',
         labelKey: 'contacts.role_secretary',
-        name: 'Sri Suresh Menon',
-        phone: '+91 90000 00004',
-        whatsapp: '+91 90000 00004',
+        name: 'Sri Vasudevan Nambeesan',
+        phone: '+91 94958 86473',
+        whatsapp: '+91 94958 86473',
         email: 'secretary@kaippullitemple.online'
     }
 ];
