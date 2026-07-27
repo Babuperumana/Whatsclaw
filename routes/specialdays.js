@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, requireRole } = require('../middleware/auth');
 
 // Helper to run SELECT queries as a Promise
 const queryAll = (db, query, params = []) => {
@@ -25,10 +25,10 @@ const runQuery = (db, query, params = []) => {
 // Validate a 'YYYY-MM-DD' date string.
 const isValidDate = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(new Date(s + 'T00:00:00').getTime());
 
-router.use(requireAuth);
+const canEdit = requireRole('admin');
 
-// GET /dashboard/specialdays - List all special days
-router.get('/', async (req, res) => {
+// GET /dashboard/specialdays - List all special days (readable by admin & staff)
+router.get('/', requireAuth, async (req, res) => {
     const db = req.db;
     const user = req.user;
 
@@ -41,6 +41,7 @@ router.get('/', async (req, res) => {
         res.render('specialdays', {
             site,
             user,
+            userRole: (user.role || 'User').toLowerCase(),
             items,
             success: req.query.success || null,
             error: req.query.error || null
@@ -51,8 +52,8 @@ router.get('/', async (req, res) => {
     }
 });
 
-// POST /dashboard/specialdays/create - Add a new special day
-router.post('/create', async (req, res) => {
+// POST /dashboard/specialdays/create - Add a new special day (admin+ only)
+router.post('/create', canEdit, async (req, res) => {
     const db = req.db;
     const { event_date, name } = req.body;
 
@@ -77,8 +78,8 @@ router.post('/create', async (req, res) => {
     }
 });
 
-// POST /dashboard/specialdays/update/:id - Update an existing special day
-router.post('/update/:id', async (req, res) => {
+// POST /dashboard/specialdays/update/:id - Update an existing special day (admin+ only)
+router.post('/update/:id', canEdit, async (req, res) => {
     const db = req.db;
     const { id } = req.params;
     const { event_date, name } = req.body;
@@ -104,8 +105,8 @@ router.post('/update/:id', async (req, res) => {
     }
 });
 
-// POST /dashboard/specialdays/delete/:id - Delete a special day
-router.post('/delete/:id', async (req, res) => {
+// POST /dashboard/specialdays/delete/:id - Delete a special day (admin+ only)
+router.post('/delete/:id', canEdit, async (req, res) => {
     const db = req.db;
     const { id } = req.params;
 

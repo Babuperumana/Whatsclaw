@@ -182,7 +182,7 @@ CREATE TABLE users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   mobile TEXT NOT NULL,
-  role TEXT NOT NULL DEFAULT 'User',
+  role TEXT NOT NULL DEFAULT 'staff',
   password TEXT NOT NULL,
   is_otp TEXT DEFAULT NULL,
   otp TEXT DEFAULT NULL,
@@ -222,7 +222,7 @@ CREATE TABLE users (
 );
 
 INSERT INTO users (id, name, mobile, role, password, email, company, pin, pan, aadhaar, location, user_token, expiry, bharatpe_connected) VALUES
-(1, 'Temple UPI Gateway', '7293959595', 'Admin', '$2b$10$BpgMgGkW0ZUhBcLu.TQFnuIXuFejsdjijegCEZ1j5TB477bJehuZW', 'babuperumana@gmail.com', 'Temple UPI Gateway', '679326', 'FGHIU5432Q', '987654321021', 'Melattur, Kerala', '3b5a65c28184fb285ab2751307c8908c', '2034-10-01', 'Yes');
+(1, 'Temple UPI Gateway', '7293959595', 'superadmin', '$2b$10$BpgMgGkW0ZUhBcLu.TQFnuIXuFejsdjijegCEZ1j5TB477bJehuZW', 'babuperumana@gmail.com', 'Temple UPI Gateway', '679326', 'FGHIU5432Q', '987654321021', 'Melattur, Kerala', '3b5a65c28184fb285ab2751307c8908c', '2034-10-01', 'Yes');
 
 CREATE TABLE vazhipadu_master (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

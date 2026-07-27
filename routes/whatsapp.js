@@ -28,9 +28,9 @@ const upload = multer({
 
 router.use(requireAuth);
 
-// Page shell — live state is fetched client-side.
+// Page shell - live state is fetched client-side.
 router.get('/', (req, res) => {
-    res.render('whatsapp', { user: req.user });
+    res.render('whatsapp', { user: req.user, userRole: (req.user.role || 'User').toLowerCase() });
 });
 
 // JSON status for the dashboard to poll. When unlinked, the raw QR is converted

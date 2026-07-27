@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, requireRole } = require('../middleware/auth');
 
 // Helper to run SELECT queries as a Promise
 const queryAll = (db, query, params = []) => {
@@ -22,10 +22,10 @@ const runQuery = (db, query, params = []) => {
     });
 };
 
-router.use(requireAuth);
+const canEdit = requireRole('admin');
 
-// GET /dashboard/vazhipadu - List all vazhipadu items
-router.get('/', async (req, res) => {
+// GET /dashboard/vazhipadu - List all vazhipadu items (readable by admin & staff)
+router.get('/', requireAuth, async (req, res) => {
     const db = req.db;
     const user = req.user;
 
@@ -38,6 +38,7 @@ router.get('/', async (req, res) => {
         res.render('vazhipadu', {
             site,
             user,
+            userRole: (user.role || 'User').toLowerCase(),
             items,
             success: req.query.success || null,
             error: req.query.error || null
@@ -48,8 +49,8 @@ router.get('/', async (req, res) => {
     }
 });
 
-// POST /dashboard/vazhipadu/create - Add new vazhipadu item
-router.post('/create', async (req, res) => {
+// POST /dashboard/vazhipadu/create - Add new vazhipadu item (admin+ only)
+router.post('/create', canEdit, async (req, res) => {
     const db = req.db;
     const { name, price, ageing } = req.body;
 
@@ -59,7 +60,7 @@ router.post('/create', async (req, res) => {
         }
 
         const priceVal = parseFloat(price);
-        const ageingVal = parseInt(ageing, 10);
+        const ageingVal = parseInt(ageing);
 
         if (isNaN(priceVal) || priceVal < 0) {
             return res.redirect('/dashboard/vazhipadu?error=' + encodeURIComponent('Price must be a valid non-negative number.'));
@@ -78,8 +79,8 @@ router.post('/create', async (req, res) => {
     }
 });
 
-// POST /dashboard/vazhipadu/update/:id - Update an existing item
-router.post('/update/:id', async (req, res) => {
+// POST /dashboard/vazhipadu/update/:id - Update an existing item (admin+ only)
+router.post('/update/:id', canEdit, async (req, res) => {
     const db = req.db;
     const { id } = req.params;
     const { name, price, ageing } = req.body;
@@ -90,7 +91,7 @@ router.post('/update/:id', async (req, res) => {
         }
 
         const priceVal = parseFloat(price);
-        const ageingVal = parseInt(ageing, 10);
+        const ageingVal = parseInt(ageing);
 
         if (isNaN(priceVal) || priceVal < 0) {
             return res.redirect('/dashboard/vazhipadu?error=' + encodeURIComponent('Price must be a valid non-negative number.'));
@@ -109,8 +110,8 @@ router.post('/update/:id', async (req, res) => {
     }
 });
 
-// POST /dashboard/vazhipadu/delete/:id - Delete an item
-router.post('/delete/:id', async (req, res) => {
+// POST /dashboard/vazhipadu/delete/:id - Delete an item (admin+ only)
+router.post('/delete/:id', canEdit, async (req, res) => {
     const db = req.db;
     const { id } = req.params;
 

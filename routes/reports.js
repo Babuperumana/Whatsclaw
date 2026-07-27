@@ -229,6 +229,7 @@ router.get('/transactions', async (req, res) => {
         res.render('reports', {
             site,
             user,
+            userRole: (user.role || 'User').toLowerCase(),
             dateFilter,
             from_date: req.query.from_date || null,
             to_date: req.query.to_date || null,

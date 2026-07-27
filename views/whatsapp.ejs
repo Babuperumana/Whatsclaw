@@ -68,6 +68,11 @@
                     <li class="nav-item">
                         <a class="nav-link active fw-bold text-primary" href="/dashboard/whatsapp"><i class="bi bi-whatsapp me-2"></i> WhatsApp</a>
                     </li>
+                    <% if (typeof userRole !== 'undefined' && (userRole === 'superadmin' || userRole === 'admin')) { %>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/dashboard/users"><i class="bi bi-people me-2"></i> User Management</a>
+                    </li>
+                    <% } %>
                     <li class="nav-item mt-4">
                         <a class="nav-link text-danger" href="/logout"><i class="bi bi-box-arrow-right me-2"></i> Logout</a>
                     </li>

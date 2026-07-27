@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
 
         // Fetch dashboard statistics
         const today = new Date().toISOString().split('T')[0];
-        
+
         // Today's total success amount
         const successRows = await getXbyY(db, `SELECT IFNULL(SUM(amount), 0) as total FROM orders WHERE status = 'SUCCESS' AND user_id = ? AND date(create_date) = ?`, [user.user_id, today]);
         const todaySuccessAmt = successRows[0].total;
@@ -49,15 +49,16 @@ router.get('/', async (req, res) => {
         // Recent orders (last 10)
         const recentOrders = await getXbyY(db, `SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC LIMIT 10`, [user.user_id]);
 
-        // Recent Vazhipadu Bookings
+        // Recent Vazhipadu Bookings (all users - shared temple data)
         const recentVazhipadu = await getXbyY(db, `SELECT * FROM vazhipadu_bookings ORDER BY id DESC LIMIT 10`);
 
-        // Recent Donations
+        // Recent Donations (all users - shared temple data)
         const recentDonations = await getXbyY(db, `SELECT * FROM donations_payment_details ORDER BY id DESC LIMIT 10`);
 
         res.render('dashboard', {
             site,
             user,
+            userRole: (user.role || 'User').toLowerCase(),
             stats: {
                 todaySuccessAmt,
                 todaySuccessCount,

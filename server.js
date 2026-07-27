@@ -66,6 +66,9 @@ app.use('/dashboard/nakshathrapooja', nakshathraPoojaRoutes);
 const whatsappRoutes = require('./routes/whatsapp');
 app.use('/dashboard/whatsapp', whatsappRoutes);
 
+const usersRoutes = require('./routes/users');
+app.use('/dashboard/users', usersRoutes);
+
 // Redirect Home Route to Dashboard
 app.get('/', (req, res) => {
     res.redirect('/dashboard');

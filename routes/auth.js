@@ -70,12 +70,12 @@ router.post('/login', redirectIfAuthenticated, async (req, res) => {
                 // Reset lock counter
                 await setXbyY(db, `UPDATE users SET acc_lock = 0 WHERE mobile = ?`, [username]);
 
-                // Generate JWT token
+                // Generate JWT token (store role as lowercase for consistent matching)
                 const token = jwt.sign({
                     user_id: user.id,
                     mobile: user.mobile,
                     name: user.name,
-                    role: user.role
+                    role: (user.role || 'staff').toLowerCase()
                 }, JWT_SECRET, { expiresIn: '1d' });
 
                 // Set cookie

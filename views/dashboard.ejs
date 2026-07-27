@@ -38,6 +38,12 @@
             border-radius: 8px;
             font-size: 24px;
         }
+
+        .role-badge {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 
@@ -69,12 +75,16 @@
                                 class="bi bi-stars me-2"></i> Nakshathra Poojas</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark" href="/dashboard/whatsapp"><i
-                                class="bi bi-whatsapp me-2"></i> WhatsApp</a>
+                        <a class="nav-link text-dark" href="/dashboard/whatsapp"><i class="bi bi-whatsapp me-2"></i> WhatsApp</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-dark" href="/dashboard/transactions"><i class="bi bi-list-check me-2"></i> Transactions</a>
                     </li>
+                    <% if (userRole === 'superadmin' || userRole === 'admin') { %>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/dashboard/users"><i class="bi bi-people me-2"></i> User Management</a>
+                    </li>
+                    <% } %>
                     <li class="nav-item">
                         <a class="nav-link text-dark" href="#"><i class="bi bi-shop me-2"></i> Connect Merchant</a>
                     </li>
@@ -83,6 +93,14 @@
                             Logout</a>
                     </li>
                 </ul>
+                <div class="mt-auto pt-4 border-top">
+                    <span class="badge role-badge
+                        <% if (userRole === 'superadmin') { %>bg-danger<% } %>
+                        <% else if (userRole === 'admin') { %>bg-warning text-dark<% } %>
+                        <% else { %>bg-secondary<% } %>">
+                        <%= userRole %>
+                    </span>
+                </div>
             </div>
 
             <!-- Main Content -->

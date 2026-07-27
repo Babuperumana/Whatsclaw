@@ -5,7 +5,7 @@ const crypto = require('crypto');
 
 // Resolve a JWT secret.
 // Priority:
-//   1. process.env.JWT_SECRET (recommended for production — set it in .env)
+//   1. process.env.JWT_SECRET (recommended for production - set it in .env)
 //   2. A locally-persisted random secret (.jwt_secret) so it survives restarts
 //      instead of falling back to a well-known hardcoded string.
 function resolveSecret() {
@@ -13,8 +13,8 @@ function resolveSecret() {
         return process.env.JWT_SECRET;
     }
 
-    // Persist under DATA_DIR (mounted volume in production) so the secret — and
-    // therefore existing login sessions — survive restarts and redeploys.
+    // Persist under DATA_DIR (mounted volume in production) so the secret - and
+    // therefore existing login sessions - survives restarts and redeploys.
     const dataDir = process.env.DATA_DIR || path.resolve(__dirname, '..');
     const secretPath = path.resolve(dataDir, '.jwt_secret');
     try {
@@ -36,6 +36,11 @@ function resolveSecret() {
 }
 
 const JWT_SECRET = resolveSecret();
+
+// Role hierarchy: higher number = more privileges.
+// requireRole('admin') allows 'admin' and 'superadmin'.
+// requireRole('superadmin') allows only 'superadmin'.
+const ROLE_LEVELS = { superadmin: 3, admin: 2, staff: 1 };
 
 function requireAuth(req, res, next) {
     const token = req.cookies.jwt_token;
@@ -68,8 +73,33 @@ function redirectIfAuthenticated(req, res, next) {
     next();
 }
 
+/**
+ * Role-based access middleware factory.
+ * @param {string} minRole - Minimum role required ('staff', 'admin', or 'superadmin')
+ *   Users with equal or higher privilege pass through.
+ *   Example: requireRole('admin') allows 'admin' and 'superadmin'.
+ */
+function requireRole(minRole) {
+    const requiredLevel = ROLE_LEVELS[minRole?.toLowerCase()] || 0;
+    return (req, res, next) => {
+        if (!req.user) {
+            return res.redirect('/login');
+        }
+        const userLevel = ROLE_LEVELS[req.user.role?.toLowerCase()] || 0;
+        if (userLevel < requiredLevel) {
+            return res.status(403).send(
+                '<h1>403 - Access Denied</h1>' +
+                '<p>You do not have permission to view this page.</p>' +
+                '<a href="/dashboard">Back to Dashboard</a>'
+            );
+        }
+        next();
+    };
+}
+
 module.exports = {
     requireAuth,
     redirectIfAuthenticated,
+    requireRole,
     JWT_SECRET
 };

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, requireRole } = require('../middleware/auth');
 
 // Nakshathram names (Malayalam) for the dropdown. Sourced from the panchangam
 // engine when available, otherwise a static fallback so the page always renders.
@@ -35,10 +35,10 @@ const runQuery = (db, query, params = []) => {
 const normNumber = (s) => String(s || '').replace(/[^0-9]/g, '');
 const STATUSES = ['ACTIVE', 'INACTIVE'];
 
-router.use(requireAuth);
+const canEdit = requireRole('admin');
 
-// GET /dashboard/nakshathrapooja - List all nakshathra poojas
-router.get('/', async (req, res) => {
+// GET /dashboard/nakshathrapooja - List all nakshathra poojas (readable by admin & staff)
+router.get('/', requireAuth, async (req, res) => {
     const db = req.db;
     const user = req.user;
 
@@ -51,6 +51,7 @@ router.get('/', async (req, res) => {
         res.render('nakshathrapooja', {
             site,
             user,
+            userRole: (user.role || 'User').toLowerCase(),
             items,
             nakshatrams: NAKSHATRAMS,
             success: req.query.success || null,
@@ -62,8 +63,8 @@ router.get('/', async (req, res) => {
     }
 });
 
-// POST /dashboard/nakshathrapooja/create - Add a new nakshathra pooja
-router.post('/create', async (req, res) => {
+// POST /dashboard/nakshathrapooja/create - Add a new nakshathra pooja (admin+ only)
+router.post('/create', canEdit, async (req, res) => {
     const db = req.db;
     const { name, nakshathram, whatsapp_number, status } = req.body;
 
@@ -87,8 +88,8 @@ router.post('/create', async (req, res) => {
     }
 });
 
-// POST /dashboard/nakshathrapooja/update/:id - Update an existing entry
-router.post('/update/:id', async (req, res) => {
+// POST /dashboard/nakshathrapooja/update/:id - Update an existing entry (admin+ only)
+router.post('/update/:id', canEdit, async (req, res) => {
     const db = req.db;
     const { id } = req.params;
     const { name, nakshathram, whatsapp_number, status } = req.body;
@@ -113,8 +114,8 @@ router.post('/update/:id', async (req, res) => {
     }
 });
 
-// POST /dashboard/nakshathrapooja/delete/:id - Delete an entry
-router.post('/delete/:id', async (req, res) => {
+// POST /dashboard/nakshathrapooja/delete/:id - Delete an entry (admin+ only)
+router.post('/delete/:id', canEdit, async (req, res) => {
     const db = req.db;
     const { id } = req.params;
 
