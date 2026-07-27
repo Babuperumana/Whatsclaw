@@ -385,7 +385,7 @@ module.exports = {
                         let receipt = t(lang, 'vazhipadu.receipt_paid', { order_id });
                         let admin = adminMsg('vazhipadu_paid_header', { order_id, phone: userPhone, name: pushName || 'N/A', total: session.totalAmount, dakshina });
                         for (let b of session.bookings) {
-                            await setXbyY(`INSERT INTO vazhipadu_bookings (order_id, phone_number, vazhipadu_name, devotee_name, nakshathram, performing_date, amount, dakshina, payment_mode, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'UPI', 'CONFIRMED')`, [order_id, userPhone, b.name, b.devoteeName, b.nakshathram, b.date, b.price, dakshina]);
+                            await setXbyY(`INSERT INTO vazhipadu_bookings (order_id, phone_number, vazhipadu_name, devotee_name, nakshathram, performing_date, amount, payment_mode, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'UPI', 'CONFIRMED')`, [order_id, userPhone, b.name, b.devoteeName, b.nakshathram, b.date, b.price]);
                             receipt += t(lang, 'vazhipadu.receipt_line', { name: b.name, devotee: b.devoteeName, nak: b.nakshathram, date: b.date }) + '\n';
                             admin += adminMsg('vazhipadu_line', { name: b.name, devotee: b.devoteeName, nak: b.nakshathram, date: b.date, price: b.price });
                         }
@@ -402,7 +402,7 @@ module.exports = {
                     let receipt = t(lang, 'vazhipadu.receipt_counter', { order_id, total: session.totalAmount });
                     let admin = adminMsg('vazhipadu_counter_header', { order_id, phone: userPhone, name: pushName || 'N/A', total: session.totalAmount, dakshina });
                     for (let b of session.bookings) {
-                        await setXbyY(`INSERT INTO vazhipadu_bookings (order_id, phone_number, vazhipadu_name, devotee_name, nakshathram, performing_date, amount, dakshina, payment_mode, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'COUNTER', 'PENDING')`, [order_id, userPhone, b.name, b.devoteeName, b.nakshathram, b.date, b.price, dakshina]);
+                        await setXbyY(`INSERT INTO vazhipadu_bookings (order_id, phone_number, vazhipadu_name, devotee_name, nakshathram, performing_date, amount, payment_mode, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'COUNTER', 'PENDING')`, [order_id, userPhone, b.name, b.devoteeName, b.nakshathram, b.date, b.price]);
                         receipt += t(lang, 'vazhipadu.receipt_line', { name: b.name, devotee: b.devoteeName, nak: b.nakshathram, date: b.date }) + '\n';
                         admin += adminMsg('vazhipadu_line', { name: b.name, devotee: b.devoteeName, nak: b.nakshathram, date: b.date, price: b.price });
                     }
