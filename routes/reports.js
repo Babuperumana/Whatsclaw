@@ -314,7 +314,7 @@ router.post('/transactions/order/create', async (req, res) => {
         enforcePermission(userRole, 'create');
         const { order_id, amount, payer_name, payer_handle, status, utr } = req.body;
         if (!order_id || !amount) {
-            return res.redirect('back');
+            return res.redirect('/dashboard/transactions');
         }
         const validStatus = ['SUCCESS', 'PENDING', 'FAILURE'];
         const finalStatus = validStatus.includes(status) ? status : 'PENDING';
@@ -322,10 +322,10 @@ router.post('/transactions/order/create', async (req, res) => {
             `INSERT INTO orders (order_id, amount, payer_name, payer_handle, status, utr, create_date, user_id) VALUES (?, ?, ?, ?, ?, ?, datetime('now'), ?)`,
             [order_id, amount, payer_name || null, payer_handle || null, finalStatus, utr || null, user.user_id]
         );
-        res.redirect('back');
+        res.redirect('/dashboard/transactions');
     } catch (err) {
         console.error('[reports] Create order error:', err);
-        res.redirect('back');
+        res.redirect('/dashboard/transactions');
     }
 });
 
@@ -352,10 +352,10 @@ router.post('/transactions/order/update/:id', async (req, res) => {
                 newRow: { ...oldRow, amount, payer_name, payer_handle, status, utr }
             });
         }
-        res.redirect('back');
+        res.redirect('/dashboard/transactions');
     } catch (err) {
         console.error('[reports] Update order error:', err);
-        res.redirect('back');
+        res.redirect('/dashboard/transactions');
     }
 });
 
@@ -367,10 +367,10 @@ router.post('/transactions/order/delete/:id', async (req, res) => {
     try {
         enforcePermission((user.role || 'User').toLowerCase(), 'delete');
         await setXbyY(db, `DELETE FROM orders WHERE id = ?`, [req.params.id]);
-        res.redirect('back');
+        res.redirect('/dashboard/transactions');
     } catch (err) {
         console.error('[reports] Delete order error:', err);
-        res.redirect('back');
+        res.redirect('/dashboard/transactions');
     }
 });
 
@@ -383,16 +383,16 @@ router.post('/transactions/vazhipadu/create', async (req, res) => {
         enforcePermission((user.role || 'User').toLowerCase(), 'create');
         const { order_id, phone_number, vazhipadu_name, devotee_name, nakshathram, performing_date, amount, payment_mode, status } = req.body;
         if (!order_id || !amount) {
-            return res.redirect('back');
+            return res.redirect('/dashboard/transactions');
         }
         await setXbyY(db,
             `INSERT INTO vazhipadu_bookings (order_id, phone_number, vazhipadu_name, devotee_name, nakshathram, performing_date, amount, payment_mode, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
             [order_id, phone_number || '', vazhipadu_name || '', devotee_name || '', nakshathram || '', performing_date || '', amount, payment_mode || 'COUNTER', status || 'PENDING']
         );
-        res.redirect('back');
+        res.redirect('/dashboard/transactions');
     } catch (err) {
         console.error('[reports] Create vazhipadu error:', err);
-        res.redirect('back');
+        res.redirect('/dashboard/transactions');
     }
 });
 
@@ -418,10 +418,10 @@ router.post('/transactions/vazhipadu/update/:id', async (req, res) => {
                 newRow: { ...oldRow, vazhipadu_name, devotee_name, nakshathram, performing_date, amount, payment_mode, status }
             });
         }
-        res.redirect('back');
+        res.redirect('/dashboard/transactions');
     } catch (err) {
         console.error('[reports] Update vazhipadu error:', err);
-        res.redirect('back');
+        res.redirect('/dashboard/transactions');
     }
 });
 
@@ -432,10 +432,10 @@ router.post('/transactions/vazhipadu/delete/:id', async (req, res) => {
     try {
         enforcePermission((req.user.role || 'User').toLowerCase(), 'delete');
         await setXbyY(db, `DELETE FROM vazhipadu_bookings WHERE id = ?`, [req.params.id]);
-        res.redirect('back');
+        res.redirect('/dashboard/transactions');
     } catch (err) {
         console.error('[reports] Delete vazhipadu error:', err);
-        res.redirect('back');
+        res.redirect('/dashboard/transactions');
     }
 });
 
@@ -448,16 +448,16 @@ router.post('/transactions/donation/create', async (req, res) => {
         enforcePermission((user.role || 'User').toLowerCase(), 'create');
         const { order_id, phone_number, amount, payment_mode, status, whatsapp_name, purpose } = req.body;
         if (!order_id || !amount) {
-            return res.redirect('back');
+            return res.redirect('/dashboard/transactions');
         }
         await setXbyY(db,
             `INSERT INTO donations_payment_details (order_id, phone_number, amount, payment_mode, status, whatsapp_name, purpose, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
             [order_id, phone_number || '', amount, payment_mode || 'COUNTER', status || 'PENDING', whatsapp_name || null, purpose || null]
         );
-        res.redirect('back');
+        res.redirect('/dashboard/transactions');
     } catch (err) {
         console.error('[reports] Create donation error:', err);
-        res.redirect('back');
+        res.redirect('/dashboard/transactions');
     }
 });
 
@@ -483,10 +483,10 @@ router.post('/transactions/donation/update/:id', async (req, res) => {
                 newRow: { ...oldRow, amount, payment_mode, status, whatsapp_name, purpose }
             });
         }
-        res.redirect('back');
+        res.redirect('/dashboard/transactions');
     } catch (err) {
         console.error('[reports] Update donation error:', err);
-        res.redirect('back');
+        res.redirect('/dashboard/transactions');
     }
 });
 
@@ -497,10 +497,10 @@ router.post('/transactions/donation/delete/:id', async (req, res) => {
     try {
         enforcePermission((req.user.role || 'User').toLowerCase(), 'delete');
         await setXbyY(db, `DELETE FROM donations_payment_details WHERE id = ?`, [req.params.id]);
-        res.redirect('back');
+        res.redirect('/dashboard/transactions');
     } catch (err) {
         console.error('[reports] Delete donation error:', err);
-        res.redirect('back');
+        res.redirect('/dashboard/transactions');
     }
 });
 
