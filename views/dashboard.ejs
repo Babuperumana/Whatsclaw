@@ -95,9 +95,7 @@
                 </ul>
                 <div class="mt-auto pt-4 border-top">
                     <span class="badge role-badge
-                        <% if (userRole === 'superadmin') { %>bg-danger<% } %>
-                        <% else if (userRole === 'admin') { %>bg-warning text-dark<% } %>
-                        <% else { %>bg-secondary<% } %>">
+                        <% if (userRole === 'superadmin') { %>bg-danger<% } else if (userRole === 'admin') { %>bg-warning text-dark<% } else { %>bg-secondary<% } %>">
                         <%= userRole %>
                     </span>
                 </div>
