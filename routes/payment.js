@@ -184,7 +184,6 @@ router.post('/status.php', async (req, res) => {
     try {
         const order_id = req.body.order_id;
         if (!order_id) {
-            console.log('[status.php] Missing order_id');
             return res.status(400).json({ status: 'ERROR', message: 'Missing order_id' });
         }
 
@@ -198,12 +197,10 @@ router.post('/status.php', async (req, res) => {
         `, [order_id]);
 
         if (sessions.length === 0) {
-            console.log('[status.php] Session not found for order_id:', order_id);
             return res.status(404).json({ status: 'ERROR', message: 'Session not found' });
         }
 
         const session = sessions[0];
-        console.log('[status.php] Session found, status:', session.status, 'order_id:', order_id);
         if (session.status !== 'PENDING') {
             return res.json({ status: session.status });
         }
@@ -212,9 +209,8 @@ router.post('/status.php', async (req, res) => {
         const now = Date.now();
         // Parse expire_timestamp correctly
         const expire_ts = new Date(session.expire_timestamp.endsWith('Z') ? session.expire_timestamp : session.expire_timestamp.replace(' ', 'T') + 'Z').getTime();
-
+        
         if (expire_ts < now) {
-            console.log('[status.php] Session expired, order_id:', order_id);
             await setXbyY(db, `UPDATE bharatpe_session_information SET status = 'FAILURE' WHERE pay_token = ?`, [session.pay_token]);
             return res.json({ status: 'FAILURE' });
         }
@@ -222,31 +218,25 @@ router.post('/status.php', async (req, res) => {
         // Fetch order meta
         const orders = await getXbyY(db, `SELECT user_token, user_id FROM orders WHERE order_id = ? LIMIT 1`, [order_id]);
         if (orders.length === 0) {
-            console.log('[status.php] Order meta not found for order_id:', order_id);
             return res.status(404).json({ status: 'ERROR', message: 'Order meta not found' });
         }
         const user_token = orders[0].user_token;
         const user_id = orders[0].user_id;
-        console.log('[status.php] Order meta: user_token:', user_token, 'user_id:', user_id);
 
         // Fetch BharatPe credentials
         const tokens = await getXbyY(db, `SELECT merchantId, token, cookie FROM bharatpe_tokens WHERE user_token = ? AND user_id = ? LIMIT 1`, [user_token, user_id]);
         if (tokens.length === 0) {
-            console.log('[status.php] BharatPe credentials not found for user_token:', user_token);
             return res.status(404).json({ status: 'ERROR', message: 'Merchant credentials not found' });
         }
         const { merchantId, token: apiToken, cookie: apiCookie } = tokens[0];
-        console.log('[status.php] BharatPe creds found: merchantId:', merchantId, 'token_len:', (apiToken || '').length, 'cookie_len:', (apiCookie || '').length);
-        console.log('[status.php] Looking for amount:', session.session_amount, 'upi_id:', session.upi_id, 'order_id:', order_id);
 
         // Call BharatPe transaction API
-        const fiveDaysAgo = new Date(now - 5 * 24 * 60 * 60 * 1000);
-        const fromDate = fiveDaysAgo.toISOString().split('T')[0];
+        const twoDaysAgo = new Date(now - 2 * 24 * 60 * 60 * 1000);
+        const fromDate = twoDaysAgo.toISOString().split('T')[0];
         const toDate = new Date(now).toISOString().split('T')[0];
 
         const url = `https://payments-tesseract.bharatpe.in/api/v1/merchant/transactions?module=PAYMENT_QR&merchantId=${encodeURIComponent(merchantId)}&sDate=${encodeURIComponent(fromDate)}&eDate=${encodeURIComponent(toDate)}`;
 
-        console.log('[status.php] Calling BharatPe API for order_id:', order_id, 'session_amount:', session.session_amount);
         const response = await fetch(url, {
             headers: {
                 'token': apiToken,
@@ -255,66 +245,42 @@ router.post('/status.php', async (req, res) => {
             }
         });
 
-        console.log('[status.php] BharatPe API response status:', response.status, 'for order_id:', order_id);
         if (response.ok) {
             const apiData = await response.json();
-            console.log('[status.php] API structure:', JSON.stringify({
-                dataKeys: apiData.data ? Object.keys(apiData.data) : [],
-                txCount: apiData.data && apiData.data.transactions ? apiData.data.transactions.length : 0,
-                collectionKeys: apiData.data && apiData.data.collection ? Object.keys(apiData.data.collection) : [],
-                totalCount: apiData.data && apiData.data.total_count,
-                hasMore: apiData.data && apiData.data.has_more,
-                page: apiData.data && apiData.data.page
-            }));
             if (apiData.data && Array.isArray(apiData.data.transactions)) {
-                console.log('[status.php] All tx amounts:', apiData.data.transactions.map(t => `${t.amount}(${t.type}/${t.status})`).join(', '));
-            }
-
-            if (apiData.data && Array.isArray(apiData.data.transactions)) {
-                const create_ts = new Date(session.create_timestamp.endsWith('Z') ? session.create_timestamp : session.create_timestamp.replace(' ', 'T') + 'Z').getTime();
-                console.log('[status.php] Recent amounts from BharatPe:', apiData.data.transactions.map(t => `${t.amount}(${t.type})`).join(', '));
-                let bestMatch = null;
-                let bestDelta = Infinity;
                 for (const tx of apiData.data.transactions) {
                     if (tx.type === 'PAYMENT_RECV' && tx.status === 'SUCCESS') {
                         const amt = parseFloat(tx.amount);
                         const ms = parseInt(tx.paymentTimestamp);
-                        if (Math.abs(amt - session.session_amount) < 0.0001) {
-                            const delta = Math.abs(ms - create_ts);
-                            if (delta < bestDelta) {
-                                bestDelta = delta;
-                                bestMatch = { amt, ms, tx };
-                            }
+                        const bankRef = tx.bankReferenceNo || '';
+                        const payerName = tx.payerName || '';
+                        const payerHandle = tx.payerHandle || '';
+                        
+                        const create_ts = new Date(session.create_timestamp.endsWith('Z') ? session.create_timestamp : session.create_timestamp.replace(' ', 'T') + 'Z').getTime();
+
+                        // Match on amount & timeframe
+                        if (
+                            Math.abs(amt - session.session_amount) < 0.0001 &&
+                            create_ts <= ms &&
+                            expire_ts >= ms
+                        ) {
+                            // Update session: SUCCESS + save UTR
+                            await setXbyY(db, `UPDATE bharatpe_session_information SET status = 'SUCCESS', utr = ? WHERE pay_token = ?`, [bankRef, session.pay_token]);
+                            
+                            // Update orders table to SUCCESS and update amount to the actual session_amount paid
+                            await setXbyY(db, `UPDATE orders SET status = 'SUCCESS', amount = ?, utr = ?, payer_name = ?, payer_handle = ? WHERE order_id = ?`, [session.session_amount, bankRef, payerName, payerHandle, order_id]);
+                            
+                            return res.json({ status: 'SUCCESS' });
                         }
                     }
                 }
-
-                if (bestMatch) {
-                    console.log('[status.php] Amount match found. Delta from create_ts:', bestDelta, 'ms — updating to SUCCESS');
-                    // Amount is the unique identifier (unique-amount algorithm). Accept
-                    // the closest match regardless of time delta — BharatPe's clock
-                    // can differ significantly from server time.
-                    const { tx } = bestMatch;
-                    const bankRef = tx.bankReferenceNo || '';
-                    const payerName = tx.payerName || '';
-                    const payerHandle = tx.payerHandle || '';
-
-                    console.log('[status.php] MATCHED! Updating order to SUCCESS, order_id:', order_id);
-                    await setXbyY(db, `UPDATE bharatpe_session_information SET status = 'SUCCESS', utr = ? WHERE pay_token = ?`, [bankRef, session.pay_token]);
-                    await setXbyY(db, `UPDATE orders SET status = 'SUCCESS', amount = ?, utr = ?, payer_name = ?, payer_handle = ? WHERE order_id = ?`, [session.session_amount, bankRef, payerName, payerHandle, order_id]);
-                    return res.json({ status: 'SUCCESS' });
-                } else {
-                    console.log('[status.php] No amount match for session_amount:', session.session_amount);
-                }
             }
-        } else {
-            console.log('[status.php] BharatPe API returned non-OK:', response.status, response.statusText, 'for order_id:', order_id);
         }
 
         return res.json({ status: 'PENDING' });
 
     } catch (error) {
-        console.error('[status.php] Error:', error);
+        console.error('Error in status.php:', error);
         return res.status(500).json({ status: 'ERROR' });
     }
 });
