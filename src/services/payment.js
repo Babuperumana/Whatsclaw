@@ -42,7 +42,16 @@ function createPayment({ getXbyY, setXbyY }) {
 
             if (!found) return sock.sendMessage(jid, { text: t(language, 'payment.too_many') });
 
-            await setXbyY(`INSERT INTO orders (gateway_txn, amount, dakshina, order_id, status, user_token, method, user_id, create_date) VALUES (?, ?, ?, ?, 'PENDING', ?, 'Bharatpe', ?, CURRENT_TIMESTAMP)`, [crypto.randomBytes(6).toString('hex'), amount, dakshina, order_id, user_token, user_id]);
+            // Insert order with dakshina (fall back if migration hasn't run yet).
+            try {
+                await setXbyY(`INSERT INTO orders (gateway_txn, amount, dakshina, order_id, status, user_token, method, user_id, create_date) VALUES (?, ?, ?, ?, 'PENDING', ?, 'Bharatpe', ?, CURRENT_TIMESTAMP)`, [crypto.randomBytes(6).toString('hex'), amount, dakshina, order_id, user_token, user_id]);
+            } catch (err) {
+                if (err.message && err.message.includes('dakshina')) {
+                    await setXbyY(`INSERT INTO orders (gateway_txn, amount, order_id, status, user_token, method, user_id, create_date) VALUES (?, ?, ?, 'PENDING', ?, 'Bharatpe', ?, CURRENT_TIMESTAMP)`, [crypto.randomBytes(6).toString('hex'), amount, order_id, user_token, user_id]);
+                } else {
+                    throw err;
+                }
+            }
             await setXbyY(`INSERT INTO bharatpe_session_information (order_id, upi_id, amount, session_amount, pay_token, create_timestamp, expire_timestamp, status, is_session_am_set) VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING', 'yes')`, [order_id, upi_id, amount, unique_amount, pay_token, create_timestamp, expire_timestamp]);
 
             const upi_deep_link = `upi://pay?pa=${encodeURIComponent(upi_id)}&am=${unique_amount}&pn=${encodeURIComponent("Temple")}&tn=${encodeURIComponent(order_id)}`;
