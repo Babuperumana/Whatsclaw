@@ -305,7 +305,7 @@ function enforcePermission(userRole, action) {
 }
 
 // POST /dashboard/transactions/order/create - Create a manual order
-router.post('/order/create', async (req, res) => {
+router.post('/transactions/order/create', async (req, res) => {
     const db = req.db;
     const user = req.user;
     const userRole = (user.role || 'User').toLowerCase();
@@ -330,7 +330,7 @@ router.post('/order/create', async (req, res) => {
 });
 
 // POST /dashboard/transactions/order/update/:id
-router.post('/order/update/:id', async (req, res) => {
+router.post('/transactions/order/update/:id', async (req, res) => {
     const db = req.db;
     const user = req.user;
 
@@ -360,7 +360,7 @@ router.post('/order/update/:id', async (req, res) => {
 });
 
 // POST /dashboard/transactions/order/delete/:id
-router.post('/order/delete/:id', async (req, res) => {
+router.post('/transactions/order/delete/:id', async (req, res) => {
     const db = req.db;
     const user = req.user;
 
@@ -375,7 +375,7 @@ router.post('/order/delete/:id', async (req, res) => {
 });
 
 // POST /dashboard/transactions/vazhipadu/create
-router.post('/vazhipadu/create', async (req, res) => {
+router.post('/transactions/vazhipadu/create', async (req, res) => {
     const db = req.db;
     const user = req.user;
 
@@ -397,7 +397,7 @@ router.post('/vazhipadu/create', async (req, res) => {
 });
 
 // POST /dashboard/transactions/vazhipadu/update/:id
-router.post('/vazhipadu/update/:id', async (req, res) => {
+router.post('/transactions/vazhipadu/update/:id', async (req, res) => {
     const db = req.db;
 
     try {
@@ -426,7 +426,7 @@ router.post('/vazhipadu/update/:id', async (req, res) => {
 });
 
 // POST /dashboard/transactions/vazhipadu/delete/:id
-router.post('/vazhipadu/delete/:id', async (req, res) => {
+router.post('/transactions/vazhipadu/delete/:id', async (req, res) => {
     const db = req.db;
 
     try {
@@ -440,7 +440,7 @@ router.post('/vazhipadu/delete/:id', async (req, res) => {
 });
 
 // POST /dashboard/transactions/donation/create
-router.post('/donation/create', async (req, res) => {
+router.post('/transactions/donation/create', async (req, res) => {
     const db = req.db;
     const user = req.user;
 
@@ -462,7 +462,7 @@ router.post('/donation/create', async (req, res) => {
 });
 
 // POST /dashboard/transactions/donation/update/:id
-router.post('/donation/update/:id', async (req, res) => {
+router.post('/transactions/donation/update/:id', async (req, res) => {
     const db = req.db;
 
     try {
@@ -491,7 +491,7 @@ router.post('/donation/update/:id', async (req, res) => {
 });
 
 // POST /dashboard/transactions/donation/delete/:id
-router.post('/donation/delete/:id', async (req, res) => {
+router.post('/transactions/donation/delete/:id', async (req, res) => {
     const db = req.db;
 
     try {
