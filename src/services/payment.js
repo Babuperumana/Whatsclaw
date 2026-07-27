@@ -7,7 +7,8 @@ const { t } = require('../i18n');
 
 function createPayment({ getXbyY, setXbyY }) {
     // Caller provides the order_id so it can be a short sequential ID (V###### / D######).
-    async function generateUPIPayment(jid, amount, sock, order_id, callbackSuccess, language) {
+    // dakshina (optional) is the optional dakshina amount to the priest, persisted alongside the order.
+    async function generateUPIPayment(jid, amount, sock, order_id, callbackSuccess, language, dakshina = 0) {
         try {
             // Find the user who has BharatPe configured (stable, role-agnostic).
             const adminUsers = await getXbyY(`SELECT u.user_token, u.id FROM users u INNER JOIN bharatpe_tokens b ON b.user_id = u.id LIMIT 1`);
@@ -41,7 +42,7 @@ function createPayment({ getXbyY, setXbyY }) {
 
             if (!found) return sock.sendMessage(jid, { text: t(language, 'payment.too_many') });
 
-            await setXbyY(`INSERT INTO orders (gateway_txn, amount, order_id, status, user_token, method, user_id, create_date) VALUES (?, ?, ?, 'PENDING', ?, 'Bharatpe', ?, CURRENT_TIMESTAMP)`, [crypto.randomBytes(6).toString('hex'), amount, order_id, user_token, user_id]);
+            await setXbyY(`INSERT INTO orders (gateway_txn, amount, dakshina, order_id, status, user_token, method, user_id, create_date) VALUES (?, ?, ?, ?, 'PENDING', ?, 'Bharatpe', ?, CURRENT_TIMESTAMP)`, [crypto.randomBytes(6).toString('hex'), amount, dakshina, order_id, user_token, user_id]);
             await setXbyY(`INSERT INTO bharatpe_session_information (order_id, upi_id, amount, session_amount, pay_token, create_timestamp, expire_timestamp, status, is_session_am_set) VALUES (?, ?, ?, ?, ?, ?, ?, 'PENDING', 'yes')`, [order_id, upi_id, amount, unique_amount, pay_token, create_timestamp, expire_timestamp]);
 
             const upi_deep_link = `upi://pay?pa=${encodeURIComponent(upi_id)}&am=${unique_amount}&pn=${encodeURIComponent("Temple")}&tn=${encodeURIComponent(order_id)}`;

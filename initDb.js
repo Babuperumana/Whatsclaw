@@ -93,6 +93,7 @@ CREATE TABLE orders (
   user_token TEXT NOT NULL,
   status TEXT DEFAULT NULL,
   amount REAL NOT NULL,
+  dakshina REAL DEFAULT 0,
   utr TEXT DEFAULT NULL,
   plan_id TEXT DEFAULT NULL,
   customer_name TEXT DEFAULT NULL,

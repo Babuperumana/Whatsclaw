@@ -168,6 +168,27 @@ async function sendAddMorePrompt(ctx) {
     });
 }
 
+// Ask whether the devotee wants to give Dakshina to the temple priest (Yes/No buttons).
+async function sendDakshinaAsk(ctx) {
+    const { sock, jid, session } = ctx;
+    const lang = session.language;
+    await sock.sendMessage(jid, {
+        text: t(lang, 'vazhipadu.dakshina_ask_text'),
+        footer: t(lang, 'common.footer'),
+        buttons: [
+            { id: 'DAKSHINA_YES', text: t(lang, 'vazhipadu.dakshina_yes') },
+            { id: 'DAKSHINA_NO', text: t(lang, 'vazhipadu.dakshina_no') }
+        ]
+    });
+}
+
+// Ask the devotee to enter a dakshina amount (free text, validated).
+async function sendDakshinaAmountPrompt(ctx) {
+    const { sock, jid, session } = ctx;
+    const lang = session.language;
+    await sock.sendMessage(jid, { text: t(lang, 'vazhipadu.dakshina_amount_prompt') });
+}
+
 // Show the booking summary with Confirm/Cancel buttons.
 async function sendSummary(ctx) {
     const { sock, jid, session } = ctx;
@@ -181,6 +202,10 @@ async function sendSummary(ctx) {
         lines.push('');
         total += b.price;
     });
+    if (session.dakshina && session.dakshina > 0) {
+        lines.push(t(lang, 'vazhipadu.summary_dakshina', { dakshina: session.dakshina }));
+        total += session.dakshina;
+    }
     lines.push(t(lang, 'vazhipadu.summary_total', { total }));
     session.totalAmount = total;
 
@@ -218,6 +243,8 @@ module.exports = {
         STATES.VAZHIPADU_NAKSHATHRAM,
         STATES.VAZHIPADU_DATE,
         STATES.VAZHIPADU_ADD_MORE,
+        STATES.VAZHIPADU_DAKSHINA_ASK,
+        STATES.VAZHIPADU_DAKSHINA_AMOUNT,
         STATES.VAZHIPADU_CONFIRM,
         STATES.VAZHIPADU_PAYMENT_MODE
     ],
@@ -226,6 +253,8 @@ module.exports = {
     async start(ctx) {
         ctx.session.bookings = [];
         ctx.session.currentBooking = null;
+        ctx.session.dakshina = 0;
+        ctx.session.totalAmount = 0;
         ctx.session.state = STATES.VAZHIPADU_SELECT;
         await sendVazhipaduList(ctx);
     },
@@ -293,11 +322,40 @@ module.exports = {
                     session.state = STATES.VAZHIPADU_SELECT;
                     await sendVazhipaduList(ctx);
                 } else if (answer === 'ADDMORE_NO' || answer === 'NO' || answer === 'N') {
-                    session.state = STATES.VAZHIPADU_CONFIRM;
-                    await sendSummary(ctx);
+                    // Proceed to dakshina prompt
+                    session.state = STATES.VAZHIPADU_DAKSHINA_ASK;
+                    session.dakshina = 0;
+                    await sendDakshinaAsk(ctx);
                 } else {
                     await sock.sendMessage(jid, { text: t(lang, 'vazhipadu.add_more_invalid') });
                 }
+                break;
+            }
+
+            case STATES.VAZHIPADU_DAKSHINA_ASK: {
+                const answer = text.toUpperCase();
+                if (answer === 'DAKSHINA_YES' || answer === 'YES' || answer === 'Y') {
+                    session.state = STATES.VAZHIPADU_DAKSHINA_AMOUNT;
+                    await sendDakshinaAmountPrompt(ctx);
+                } else if (answer === 'DAKSHINA_NO' || answer === 'NO' || answer === 'N') {
+                    session.dakshina = 0;
+                    session.state = STATES.VAZHIPADU_CONFIRM;
+                    await sendSummary(ctx);
+                } else {
+                    await sock.sendMessage(jid, { text: t(lang, 'vazhipadu.dakshina_invalid') });
+                }
+                break;
+            }
+
+            case STATES.VAZHIPADU_DAKSHINA_AMOUNT: {
+                const amount = parseFloat(text);
+                if (!text || isNaN(amount) || amount <= 0) {
+                    await sock.sendMessage(jid, { text: t(lang, 'vazhipadu.dakshina_invalid_amount') });
+                    break;
+                }
+                session.dakshina = parseFloat(amount.toFixed(2));
+                session.state = STATES.VAZHIPADU_CONFIRM;
+                await sendSummary(ctx);
                 break;
             }
 
@@ -319,30 +377,37 @@ module.exports = {
 
             case STATES.VAZHIPADU_PAYMENT_MODE: {
                 const mode = text.toUpperCase();
+                const dakshina = session.dakshina || 0;
                 if (mode === 'PAY_UPI' || text === '1') {
                     const order_id = await generateOrderId('V', getXbyY, setXbyY);
                     await sock.sendMessage(jid, { text: t(lang, 'vazhipadu.generating_qr') });
                     payment.generateUPIPayment(jid, session.totalAmount, sock, order_id, async (order_id) => {
                         let receipt = t(lang, 'vazhipadu.receipt_paid', { order_id });
-                        let admin = adminMsg('vazhipadu_paid_header', { order_id, phone: userPhone, name: pushName || 'N/A', total: session.totalAmount });
+                        let admin = adminMsg('vazhipadu_paid_header', { order_id, phone: userPhone, name: pushName || 'N/A', total: session.totalAmount, dakshina });
                         for (let b of session.bookings) {
-                            await setXbyY(`INSERT INTO vazhipadu_bookings (order_id, phone_number, vazhipadu_name, devotee_name, nakshathram, performing_date, amount, payment_mode, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'UPI', 'CONFIRMED')`, [order_id, userPhone, b.name, b.devoteeName, b.nakshathram, b.date, b.price]);
+                            await setXbyY(`INSERT INTO vazhipadu_bookings (order_id, phone_number, vazhipadu_name, devotee_name, nakshathram, performing_date, amount, dakshina, payment_mode, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'UPI', 'CONFIRMED')`, [order_id, userPhone, b.name, b.devoteeName, b.nakshathram, b.date, b.price, dakshina]);
                             receipt += t(lang, 'vazhipadu.receipt_line', { name: b.name, devotee: b.devoteeName, nak: b.nakshathram, date: b.date }) + '\n';
                             admin += adminMsg('vazhipadu_line', { name: b.name, devotee: b.devoteeName, nak: b.nakshathram, date: b.date, price: b.price });
+                        }
+                        if (dakshina > 0) {
+                            receipt += t(lang, 'vazhipadu.summary_dakshina', { dakshina }) + '\n';
                         }
                         receipt += t(lang, 'vazhipadu.receipt_thanks');
                         await sock.sendMessage(jid, { text: receipt });
                         await notify.notifyAdmin(sock, admin);
                         session.state = STATES.IDLE;
-                    }, lang);
+                    }, lang, dakshina);
                 } else if (mode === 'PAY_COUNTER' || text === '2') {
                     const order_id = await generateOrderId('CV', getXbyY, setXbyY);
                     let receipt = t(lang, 'vazhipadu.receipt_counter', { order_id, total: session.totalAmount });
-                    let admin = adminMsg('vazhipadu_counter_header', { order_id, phone: userPhone, name: pushName || 'N/A', total: session.totalAmount });
+                    let admin = adminMsg('vazhipadu_counter_header', { order_id, phone: userPhone, name: pushName || 'N/A', total: session.totalAmount, dakshina });
                     for (let b of session.bookings) {
-                        await setXbyY(`INSERT INTO vazhipadu_bookings (order_id, phone_number, vazhipadu_name, devotee_name, nakshathram, performing_date, amount, payment_mode, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'COUNTER', 'PENDING')`, [order_id, userPhone, b.name, b.devoteeName, b.nakshathram, b.date, b.price]);
+                        await setXbyY(`INSERT INTO vazhipadu_bookings (order_id, phone_number, vazhipadu_name, devotee_name, nakshathram, performing_date, amount, dakshina, payment_mode, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'COUNTER', 'PENDING')`, [order_id, userPhone, b.name, b.devoteeName, b.nakshathram, b.date, b.price, dakshina]);
                         receipt += t(lang, 'vazhipadu.receipt_line', { name: b.name, devotee: b.devoteeName, nak: b.nakshathram, date: b.date }) + '\n';
                         admin += adminMsg('vazhipadu_line', { name: b.name, devotee: b.devoteeName, nak: b.nakshathram, date: b.date, price: b.price });
+                    }
+                    if (dakshina > 0) {
+                        receipt += t(lang, 'vazhipadu.summary_dakshina', { dakshina }) + '\n';
                     }
                     await sock.sendMessage(jid, { text: receipt });
                     await notify.notifyAdmin(sock, admin);
