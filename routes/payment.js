@@ -240,8 +240,8 @@ router.post('/status.php', async (req, res) => {
         console.log('[status.php] Looking for amount:', session.session_amount, 'upi_id:', session.upi_id, 'order_id:', order_id);
 
         // Call BharatPe transaction API
-        const twoDaysAgo = new Date(now - 2 * 24 * 60 * 60 * 1000);
-        const fromDate = twoDaysAgo.toISOString().split('T')[0];
+        const fiveDaysAgo = new Date(now - 5 * 24 * 60 * 60 * 1000);
+        const fromDate = fiveDaysAgo.toISOString().split('T')[0];
         const toDate = new Date(now).toISOString().split('T')[0];
 
         const url = `https://payments-tesseract.bharatpe.in/api/v1/merchant/transactions?module=PAYMENT_QR&merchantId=${encodeURIComponent(merchantId)}&sDate=${encodeURIComponent(fromDate)}&eDate=${encodeURIComponent(toDate)}`;
@@ -258,7 +258,14 @@ router.post('/status.php', async (req, res) => {
         console.log('[status.php] BharatPe API response status:', response.status, 'for order_id:', order_id);
         if (response.ok) {
             const apiData = await response.json();
-            console.log('[status.php] BharatPe API data keys:', apiData.data ? Object.keys(apiData.data) : 'no data', 'tx count:', apiData.data && apiData.data.transactions ? apiData.data.transactions.length : 0);
+            console.log('[status.php] API structure:', JSON.stringify({
+                dataKeys: apiData.data ? Object.keys(apiData.data) : [],
+                txCount: apiData.data && apiData.data.transactions ? apiData.data.transactions.length : 0,
+                collectionKeys: apiData.data && apiData.data.collection ? Object.keys(apiData.data.collection) : [],
+                totalCount: apiData.data && apiData.data.total_count,
+                hasMore: apiData.data && apiData.data.has_more,
+                page: apiData.data && apiData.data.page
+            }));
             if (apiData.data && Array.isArray(apiData.data.transactions)) {
                 console.log('[status.php] All tx amounts:', apiData.data.transactions.map(t => `${t.amount}(${t.type}/${t.status})`).join(', '));
             }
