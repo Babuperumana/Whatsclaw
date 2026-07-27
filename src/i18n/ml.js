@@ -27,13 +27,13 @@ module.exports = {
         row_contacts: 'കോണ്ടാക്ട്സ്',
         row_contacts_desc: 'ഞങ്ങളെ ബന്ധപ്പെടുക',
         row_specialdays: 'വിശേഷ ദിവസങ്ങൾ',
-        row_specialdays_desc: 'വരാനിരിക്കുന്ന വിശേഷ ദിവസങ്ങൾ',
+        row_specialdays_desc: 'വിശേഷ ദിവസങ്ങൾ',
         row_settings: 'സെറ്റിങ്‌സ്',
         row_settings_desc: 'ഭാഷ ക്രമീകരണങ്ങൾ'
     },
 
     special_days: {
-        title: '📅 വരാനിരിക്കുന്ന വിശേഷ ദിവസങ്ങൾ',
+        title: '📅 വിശേഷ ദിവസങ്ങൾ',
         list_item: '{n}. {date} — {name}',
         none: 'ഇന്ന് വിശേഷ ദിവസങ്ങളൊന്നുമില്ല. ദയവായി പിന്നീട് വീണ്ടും സന്ദർശിക്കുക.'
     },
@@ -48,9 +48,9 @@ module.exports = {
         text: "📍 *സ്ഥലം*\nമേലാറ്റൂർ, കേരളം\nദക്ഷേത്രത്തിലേക്കുള്ള വഴി അറിയാൻ മുകളിലുള്ള മാപ്പ് തുറക്കുക."
     },
     contacts: {
-        list_text: '📞 *ക്ഷേത്ര ബന്ധപ്പെടലുകൾ*\n\nബന്ധപ്പെടേണ്ട വ്യക്തിയെ തിരഞ്ഞെടുക്കാൻ താഴെയുള്ള ബട്ടൺ അമർത്തുക.',
+        list_text: '📞 *ക്ഷേത്ര കോണ്ടാക്ട്സ്*\n\nബന്ധപ്പെടേണ്ട വ്യക്തിയെ തിരഞ്ഞെടുക്കാൻ താഴെയുള്ള ബട്ടൺ അമർത്തുക.',
         list_title: 'ക്ഷേത്ര ബന്ധപ്പെടലുകൾ',
-        list_button: 'ബന്ധപ്പെടലുകൾ കാണുക',
+        list_button: 'കോണ്ടാക്ട്സ്',
         list_section: 'ബന്ധപ്പെടലുകൾ',
         role_priest: 'ക്ഷേത്ര മേൽശാന്തി',
         role_counter: 'ക്ഷേത്ര കൗണ്ടർ',
@@ -74,16 +74,16 @@ module.exports = {
         text: '⚙️ *ക്രമീകരണങ്ങൾ*\n\nതാഴെ നിങ്ങളുടെ ഇഷ്ട ഭാഷ തിരഞ്ഞെടുക്കുക.',
         menu_text: '⚙️ *ക്രമീകരണങ്ങൾ*\n\nനിങ്ങൾ എന്താണ് ചെയ്യാൻ ആഗ്രഹിക്കുന്നത്?',
         menu_title: 'സെറ്റിങ്‌സ്',
-        menu_button: 'ക്രമീകരണങ്ങൾ തുറക്കുക',
+        menu_button: 'സെറ്റിങ്‌സ്',
         menu_section: 'ഓപ്ഷനുകൾ',
         opt_language: 'ഭാഷ മാറ്റുക',
         opt_language_desc: 'നിങ്ങളുടെ ഇഷ്ട ഭാഷ സജ്ജമാക്കുക',
-        opt_vazhipadu: 'എന്റെ വഴിപാടുകൾ',
+        opt_vazhipadu: 'എന്റെ ബുക്കിംഗുകൾ',
         opt_vazhipadu_desc: 'മുൻ & വരാനിരിക്കുന്ന ബുക്കിംഗുകൾ',
         opt_nakshathra: 'എന്റെ നക്ഷത്ര പൂജകൾ',
-        opt_nakshathra_desc: 'വരാനിരിക്കുന്ന പൂജാ തീയതികൾ',
+        opt_nakshathra_desc: 'പൂജാ തീയതികൾ',
         invalid: 'അസാധുവായ ഓപ്ഷൻ. പട്ടികയിൽ നിന്ന് ഒന്ന് തിരഞ്ഞെടുക്കുക.',
-        vazhipadu_header: '🌺 *എന്റെ വഴിപാടുകൾ*',
+        vazhipadu_header: '🌺 *എന്റെ ബുക്കിംഗുകൾ*',
         vazhipadu_upcoming: '*വരാനിരിക്കുന്നവ*',
         vazhipadu_past: '*മുൻപുള്ളവ*',
         vazhipadu_line: '• {name} ({nak}) — {devotee} ({date}) — {status}',
@@ -97,13 +97,13 @@ module.exports = {
     vazhipadu: {
         select_text: '🌺 *ഒരു വഴിപാട് തിരഞ്ഞെടുക്കുക* 🌺\n\nതാഴെ അമർത്തി വഴിപാട് തിരഞ്ഞെടുക്കുക.',
         select_title: 'വഴിപാട് ഇനങ്ങൾ',
-        select_button: 'വഴിപാട് കാണുക',
+        select_button: 'വഴിപാടുകൾ',
         select_section: 'ലഭ്യമായ വഴിപാടുകൾ',
         invalid_select: 'തെറ്റായ തിരഞ്ഞെടുപ്പ്. ലിസ്റ്റിൽ നിന്ന് ഒരു ഇനം തിരഞ്ഞെടുക്കുക.',
         you_selected: 'നിങ്ങൾ *{name}* തിരഞ്ഞെടുത്തു.\nഭക്തന്റെ പേര് നൽകുക:',
         nak_text: '⭐ *നക്ഷത്രം തിരഞ്ഞെടുക്കുക* ⭐',
         nak_title: 'നക്ഷത്രം',
-        nak_button: 'നക്ഷത്രം കാണുക',
+        nak_button: 'നക്ഷത്രങ്ങൾ',
         nak_section: 'നക്ഷത്രം ({from}-{to})',
         invalid_nak: 'തെറ്റായ നക്ഷത്രം. ലിസ്റ്റിൽ നിന്ന് തിരഞ്ഞെടുക്കുക.',
         date_text: '📅 *വഴിപാട് നടത്തേണ്ട തീയതി തിരഞ്ഞെടുക്കുക* 📅\n\nഓരോ തീയതിയും അതിന്റെ നക്ഷത്രം കാണിക്കുന്നു.',
@@ -131,7 +131,7 @@ module.exports = {
         pay_invalid: "ദയവായി 'UPI വഴി' അല്ലെങ്കിൽ 'കൗണ്ടറിൽ' തിരഞ്ഞെടുക്കുക.",
         generating_qr: 'UPI QR കോഡ് ഉണ്ടാക്കുന്നു... ദയവായി കാത്തിരിക്കുക.',
         receipt_paid: '✅ *പേയ്‌മെന്റ് വിജയകരമായി പൂർത്തിയായി. നിങ്ങളുടെ വഴിപാട് രജിസ്റ്റർ ചെയ്തിരിക്കുന്നു.* ✅\n\n*ഓർഡർ ഐഡി:* {order_id}\n',
-        receipt_counter: '✅ *ബുക്കിംഗ് സ്വീകരിച്ചു (കൗണ്ടറിൽ അടയ്ക്കുക)* ✅\n\n*ഓർഡർ ഐഡി:* {order_id}\n₹{total} അടയ്ക്കാൻ ഈ സന്ദേശം ക്ഷേത്ര ഓഫീസിൽ കാണിച്ച് തുക അടയ്ക്കാവുന്നതാണ്.\n',
+        receipt_counter: '✅ *ബുക്കിംഗ് സ്വീകരിച്ചു (കൗണ്ടറിൽ അടയ്ക്കും)* ✅\n\n*ഓർഡർ ഐഡി:* {order_id}\n₹{total} അടയ്ക്കാൻ ഈ സന്ദേശം ക്ഷേത്ര ഓഫീസിൽ കാണിച്ച് തുക അടയ്ക്കാവുന്നതാണ്.\n',
         receipt_line: '- {name} ({devotee}) - {nak} - {date}',
         receipt_thanks: '\nനിങ്ങളുടെ വഴിപാടിന് നന്ദി. ഈശ്വരാനുഗ്രഹം ഉണ്ടാകട്ടെ! 🙏'
     },
@@ -154,12 +154,12 @@ module.exports = {
     },
 
     admin_panchangam: {
-        header: '📅 *നാളെയുള്ള പഞ്ചാങ്ഗം* 📅',
+        header: '📅 *നാളെയുള്ള പഞ്ചാംഗം* 📅',
         date_label: '📆 തീയതി: {gregorian} ({weekday})',
         malayalam_label: '🪔 മലയാളം: {month} {day}, {year}',
-        nakshathram_section: '⭐ 24 മണിക്കൂറുകളുടെ നക്ഷത്രവിവരം:',
+        nakshathram_section: '⭐ നക്ഷത്രവിവരം:',
         nakshathram_segment: '   {name} ({start} മുതൽ {end} വരെ)',
-        nakshathram_today_label: '📌 ഇന്ന്/നാളെയുള്ള പ്രധാന നക്ഷത്രം:',
+        nakshathram_today_label: '📌 നാളെത്തെ നക്ഷത്രം:',
         nakshathram_simple_label: '   {nak}',
         nakshathram_label: '⭐ നക്ഷത്രം: {nak}',
         nakshathram_less_label: '⚠️ *നക്ഷത്രം ഇല്ലാത്ത ദിവസം*',
@@ -172,9 +172,9 @@ module.exports = {
         sunset_label: '🌇 സൂര്യാസ്തമയം: {time}',
         rahukalam_label: '⚠️ രാഹുകാലം: {time}',
         yamagandam_label: '⚠️ യമഗണ്ഡം: {time}',
-        gulika_label: '⚠️ ഗുലിക: {time}',
+        gulika_label: '⚠️ ഗുളിക: {time}',
         vishesham_label: '🎉 പ്രത്യേകം: {events}',
-        footer: '\n🙏 എല്ലാവരുടെക്കുള്ള അനുഗ്രഹം! 🙏'
+        footer: '\n🙏െം! 🙏'
     },
 
     donation: {
