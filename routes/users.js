@@ -50,7 +50,7 @@ router.get('/', async (req, res) => {
 
     try {
         const settings = await getXbyY(db, `SELECT * FROM site_settings LIMIT 1`);
-        const site = settings.length > 0 ? settings[0] : { brand_name: 'Temple UPI' };
+        const site = settings.length > 0 ? settings[0] : { brand_name: 'Temple Management' };
 
         const users = await getXbyY(db, `SELECT id, name, mobile, email, role, acc_lock, acc_ban, expiry, bharatpe_connected FROM users ORDER BY id ASC`);
 

@@ -161,7 +161,7 @@ CREATE TABLE site_settings (
 );
 
 INSERT INTO site_settings (id, brand_name, logo_url, site_link, whatsapp_number, copyright_text) VALUES
-(1, 'Temple Payment Gateway', '/common/img/logo.png', 'https://pg.kaippullitemple.online/', '8907959595', 'Temple UPI Gateway');
+(1, 'Temple Management', '/common/img/logo.png', 'https://pg.kaippullitemple.online/', '8907959595', 'Temple Management');
 
 CREATE TABLE subscription_plan (
   id INTEGER PRIMARY KEY AUTOINCREMENT,

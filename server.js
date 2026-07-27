@@ -79,8 +79,13 @@ const { createDb } = require('./src/services/db');
 const { seedCounters } = require('./src/utils/orderId');
 
 app.listen(port, () => {
-    console.log(`Temple UPI Gateway Node.js Server listening at http://localhost:${port}`);
+    console.log(`Temple Management Node.js Server listening at http://localhost:${port}`);
     const { getXbyY, setXbyY } = createDb(db);
     seedCounters(getXbyY, setXbyY).catch(e => console.error('Failed to seed order counters:', e));
     initWhatsAppBot(db);
+    // Migration: keep the live site_settings brand_name in sync with the codebase.
+    db.run(
+        `UPDATE site_settings SET brand_name = 'Temple Management' WHERE brand_name IN ('Temple UPI', 'Temple Payment Gateway')`,
+        (err) => { if (err) console.error('Failed to update site_settings.brand_name:', err.message); }
+    );
 });

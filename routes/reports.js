@@ -241,7 +241,7 @@ router.get('/transactions', async (req, res) => {
 
     try {
         const settings = await getXbyY(db, `SELECT * FROM site_settings LIMIT 1`);
-        const site = settings.length > 0 ? settings[0] : { brand_name: 'Temple UPI' };
+        const site = settings.length > 0 ? settings[0] : { brand_name: 'Temple Management' };
 
         const dateFilter = buildDateFilter({ from_date, to_date, period });
         const ordersData = await fetchOrders(db, user.user_id, dateFilter);

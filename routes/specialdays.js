@@ -34,7 +34,7 @@ router.get('/', requireAuth, async (req, res) => {
 
     try {
         const settings = await queryAll(db, `SELECT * FROM site_settings LIMIT 1`);
-        const site = settings.length > 0 ? settings[0] : { brand_name: 'Temple UPI' };
+        const site = settings.length > 0 ? settings[0] : { brand_name: 'Temple Management' };
 
         const items = await queryAll(db, `SELECT * FROM special_days ORDER BY event_date ASC`);
 

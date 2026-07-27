@@ -28,7 +28,7 @@ router.get('/login', redirectIfAuthenticated, async (req, res) => {
     const db = req.db;
     try {
         const settings = await getXbyY(db, `SELECT * FROM site_settings LIMIT 1`);
-        const site = settings.length > 0 ? settings[0] : { brand_name: 'Temple UPI', logo_url: '' };
+        const site = settings.length > 0 ? settings[0] : { brand_name: 'Temple Management', logo_url: '' };
         
         res.render('login', { site, error: null });
     } catch (err) {
@@ -44,7 +44,7 @@ router.post('/login', redirectIfAuthenticated, async (req, res) => {
 
     try {
         const settings = await getXbyY(db, `SELECT * FROM site_settings LIMIT 1`);
-        const site = settings.length > 0 ? settings[0] : { brand_name: 'Temple UPI', logo_url: '' };
+        const site = settings.length > 0 ? settings[0] : { brand_name: 'Temple Management', logo_url: '' };
 
         if (!username || !password) {
             return res.render('login', { site, error: 'Please enter mobile and password.' });
