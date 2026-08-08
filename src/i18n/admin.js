@@ -9,12 +9,12 @@ function interpolate(str, vars) {
 }
 
 const ADMIN = {
-    vazhipadu_paid_header: '🆕 *പുതിയ വഴിപാട് ബുക്കിംഗ് (UPI - Paid)*\n\n*ഓർഡർ ഐഡി:* {order_id}\n*ഭക്തന്റെ ഫോൺ:* {phone}\n*വാട്‌സ്ആപ്പ് പേര്:* {name}\n*ആകെ തുക:* ₹{total}\n*ഡക്ഷിന:* ₹{dakshina}\n\n*ബുക്കിംഗുകൾ:*\n',
-    vazhipadu_counter_header: '🆕 *പുതിയ വഴിപാട് ബുക്കിംഗ് (കൗണ്ടറിൽ അടയ്ക്കും - Pending)*\n\n*ഓർഡർ ഐഡി:* {order_id}\n*ഭക്തന്റെ ഫോൺ:* {phone}\n*വാട്‌സ്ആപ്പ് പേര്:* {name}\n*ആകെ തുക:* ₹{total}\n*ഡക്ഷിന:* ₹{dakshina}\n\n*ബുക്കിംഗുകൾ:*\n',
+    vazhipadu_paid_header: '🆕 *പുതിയ വഴിപാട് ബുക്കിംഗ് (UPI - Paid)*\n\n*ഓർഡർ ഐഡി:* {order_id}\n*ഫോൺ:* {phone}\n*പേര്:* {name}\n*ആകെ തുക:* ₹{total}\n*ദക്ഷിണ:* ₹{dakshina}\n\n*ബുക്കിംഗുകൾ:*\n',
+    vazhipadu_counter_header: '🆕 *പുതിയ വഴിപാട് ബുക്കിംഗ് (കൗണ്ടറിൽ അടയ്ക്കും - Pending)*\n\n*ഓർഡർ ഐഡി:* {order_id}\n*ഫോൺ:* {phone}\n*പേര്:* {name}\n*ആകെ തുക:* ₹{total}\n*ഡക്ഷിന:* ₹{dakshina}\n\n*ബുക്കിംഗുകൾ:*\n',
     vazhipadu_line: '- {name} | ഭക്തൻ: {devotee} | നക്ഷത്രം: {nak} | തീയതി: {date} | ₹{price}\n',
 
-    donation_paid: '🆕 *പുതിയ സംഭാവന (UPI - Paid)*\n\n*ഓർഡർ ഐഡി:* {order_id}\n*ഫോൺ:* {phone}\n*വാട്‌സ്ആപ്പ് പേര്:* {name}\n*ഉദ്ദേശ്യം:* {purpose}\n*തുക:* ₹{amount}',
-    donation_counter: '🆕 *പുതിയ സംഭാവന (കൗണ്ടറിൽ അടയ്ക്കും - Pending)*\n\n*ഓർഡർ ഐഡി:* {order_id}\n*ഫോൺ:* {phone}\n*വാട്‌സ്ആപ്പ് പേര്:* {name}\n*ഉദ്ദേശ്യം:* {purpose}\n*തുക:* ₹{amount}'
+    donation_paid: '🆕 *പുതിയ സംഭാവന (UPI - Paid)*\n\n*ഓർഡർ ഐഡി:* {order_id}\n*ഫോൺ:* {phone}\n*പേര്:* {name}\n*ഉദ്ദേശ്യം:* {purpose}\n*തുക:* ₹{amount}',
+    donation_counter: '🆕 *പുതിയ സംഭാവന (കൗണ്ടറിൽ അടയ്ക്കും - Pending)*\n\n*ഓർഡർ ഐഡി:* {order_id}\n*ഫോൺ:* {phone}\n*പേര്:* {name}\n*ഉദ്ദേശ്യം:* {purpose}\n*തുക:* ₹{amount}'
 };
 
 // Translate an admin key (Malayalam only).
