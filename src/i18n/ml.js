@@ -161,7 +161,7 @@ module.exports = {
     },
 
     admin_panchangam: {
-        header: '📅 *നാളെയുള്ള പഞ്ചാംഗം* 📅',
+        header: '📅 *നാളെത്തെ പഞ്ചാംഗം* 📅',
         date_label: '📆 തീയതി: {gregorian} ({weekday})',
         malayalam_label: '🪔 മലയാളം: {month} {day}, {year}',
         nakshathram_section: '⭐ നക്ഷത്രവിവരം:',
