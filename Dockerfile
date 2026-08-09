@@ -1,22 +1,8 @@
 # syntax=docker/dockerfile:1
 
-# ---- Builder: compile native deps (sqlite3, Baileys) ----
-FROM node:22-bookworm-slim AS builder
-
-# Toolchain needed for node-gyp native builds.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 make g++ \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
-
-# Install production deps against the lockfile for reproducible builds.
-COPY package.json package-lock.json ./
-ARG DEPLOY_CACHEBUST=2026-08-09-2
-RUN npm_config_build_from_source=sqlite3 npm ci --omit=dev
-
-# ---- Runtime ----
-FROM node:22-bookworm-slim AS runtime
+# Single-stage build on full bookworm (not slim) to avoid OOM during
+# native builds (sqlite3 + Baileys) and to skip the apt-get toolchain step.
+FROM node:22-bookworm
 
 ENV NODE_ENV=production \
     PORT=3001 \
@@ -24,11 +10,17 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
-# Bring in compiled node_modules from the builder.
-COPY --chown=node:node --from=builder /app/node_modules ./node_modules
+# Install production deps against the lockfile for reproducible builds.
+# Coolify injects its own DEPLOY_CACHEBUST ARG which would prevent npm ci
+# from re-running, so we also ADD a commit-based dummy file to guarantee
+# the install layer is invalidated whenever the source changes.
+COPY package.json package-lock.json ./
+# cache-bust: 2026-08-09-v3
+ADD cache-bust.txt /tmp/cache-bust.txt
+RUN npm_config_build_from_source=sqlite3 npm ci --omit=dev
 
-# Application source.
-COPY --chown=node:node . .
+# Application source (adds the cache-bust marker above + everything else).
+COPY . .
 
 # Entrypoint that bootstraps the DB on first boot then launches the server.
 RUN chmod +x docker-entrypoint.sh
@@ -37,8 +29,10 @@ RUN chmod +x docker-entrypoint.sh
 RUN mkdir -p /data && chown node:node /data
 VOLUME ["/data"]
 
-# Drop root.
-USER node
+# Run as non-root.
+RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser \
+    && chown -R appuser:appuser /app /data
+USER appuser
 
 EXPOSE 3001
 
