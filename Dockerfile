@@ -12,7 +12,7 @@ WORKDIR /app
 
 # Install production deps against the lockfile for reproducible builds.
 COPY package.json package-lock.json ./
-ARG DEPLOY_CACHEBUST=2026-07-26-3
+ARG DEPLOY_CACHEBUST=2026-08-09-1
 RUN npm_config_build_from_source=sqlite3 npm ci --omit=dev
 
 # ---- Runtime ----
