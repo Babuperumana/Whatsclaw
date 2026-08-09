@@ -29,10 +29,8 @@ RUN chmod +x docker-entrypoint.sh
 RUN mkdir -p /data && chown node:node /data
 VOLUME ["/data"]
 
-# Run as non-root.
-RUN groupadd -r appuser && useradd -r -g appuser -d /app -s /sbin/nologin appuser \
-    && chown -R appuser:appuser /app /data
-USER appuser
+# Run as node (matches the existing /data volume ownership from prior runs).
+USER node
 
 EXPOSE 3001
 

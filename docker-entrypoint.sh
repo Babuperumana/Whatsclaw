@@ -5,7 +5,8 @@ set -e
 DATA_DIR="${DATA_DIR:-/data}"
 export DATA_DIR
 
-mkdir -p "$DATA_DIR"
+mkdir -p "$DATA_DIR" "$DATA_DIR/auth_info_baileys"
+chmod 755 "$DATA_DIR" "$DATA_DIR/auth_info_baileys" 2>/dev/null || true
 
 # Initialize the SQLite schema ONLY on first boot. initDb.js drops and recreates
 # every table, so we must never run it when a database already exists — doing so
