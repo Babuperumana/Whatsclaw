@@ -190,86 +190,84 @@ function createReminderService(rawDb, { sendMessage, isConnected }) {
         }
 
         // --- Admin Nakshathra Reminder: tomorrow's pooja list (Malayalam) ---
+        // Uses tomorrow's panchangam (same engine as the 4:50PM slot) to get the
+        // definitive nakshathram, then fetches matching devotees from the DB.
         if (slot === 'nakshathra_admin') {
-            const tomorrow = addDays(runDateObj, 1);
-            const tomorrowIsoDate = isoDate(tomorrow);
+            const tomorrowDate = tomorrowIso();
 
-            // Get tomorrow's panchangam for Malayalam date details
-            const pan = getPanchangam();
-            let malWeekday = '';
-            let malMonth = '';
-            let malDay = '';
-            let malYear = '';
-            let tomorrowNaks = [];
+            // Get tomorrow's full panchangam — this is the source of truth
+            let malWeekday = '', malMonth = '', malDayNum = '', malYear = '';
+            let primaryNakMl = '';
+            const secondaryNakMl = [];
 
-            if (pan && typeof pan.getNextNakshatraDates === 'function') {
-                const panTomorrow = getPanchangam(tomorrowIsoDate, 0, 0);
-                if (panTomorrow) {
-                    malWeekday = (panTomorrow.weekday && panTomorrow.weekday.ml) || '';
-                    malMonth = (panTomorrow.kollavarsham && panTomorrow.kollavarsham.monthMl) || '';
-                    malDay = (panTomorrow.kollavarsham && panTomorrow.kollavarsham.day) || '';
-                    malYear = (panTomorrow.kollavarsham && panTomorrow.kollavarsham.year) || '';
+            try {
+                const pan = getPanchangam(tomorrowDate);
+                if (pan) {
+                    malWeekday = (pan.weekday && pan.weekday.ml) || '';
+                    malMonth = (pan.kollavarsham && pan.kollavarsham.monthMl) || '';
+                    malDayNum = (pan.kollavarsham && pan.kollavarsham.day) || '';
+                    malYear = (pan.kollavarsham && pan.kollavarsham.year) || '';
+                    primaryNakMl = (pan.nakshathram && pan.nakshathram.ml) || '';
 
-                    // Collect ALL nakshathrams active during tomorrow from nakshatramDetails
-                    const seen = new Set();
-                    if (panTomorrow.nakshatramDetails) {
-                        for (const seg of panTomorrow.nakshatramDetails) {
-                            const mlName = (seg.nakshatram && seg.nakshatram.ml) || '';
-                            if (mlName && !seen.has(mlName)) {
-                                seen.add(mlName);
-                                tomorrowNaks.push(mlName);
+                    // Collect secondary nakshathrams (if a split day has two)
+                    const seen = new Set([primaryNakMl]);
+                    if (pan.nakshatramDetails) {
+                        for (const seg of pan.nakshatramDetails) {
+                            const ml = (seg.nakshatram && seg.nakshatram.ml) || '';
+                            if (ml && !seen.has(ml)) {
+                                seen.add(ml);
+                                secondaryNakMl.push(ml);
                             }
                         }
                     }
-                    // Fallback: use primary nakshathram if no details available
-                    if (tomorrowNaks.length === 0 && panTomorrow.nakshathram && panTomorrow.nakshathram.ml) {
-                        tomorrowNaks.push(panTomorrow.nakshathram.ml);
-                    }
                 }
+            } catch (e) {
+                console.error('[reminders] nakshathra_admin panchangam lookup failed:', e.message);
             }
 
-            if (tomorrowNaks.length === 0) {
+            if (!primaryNakMl) {
                 await db.setXbyY('UPDATE reminder_runs SET sent_count = 0 WHERE slot = ? AND run_date = ?',
                     [slot, runDate]);
-                console.log(`[reminders] nakshathra_admin: no nakshathram data for ${tomorrowIsoDate}`);
+                console.log(`[reminders] nakshathra_admin: no panchangam data for ${tomorrowDate}`);
                 return;
             }
 
-            // Fetch ALL active devotees and match against tomorrow's nakshathrams
+            // Build the list of nakshathrams to query: primary first, then secondaries
+            const allTomorrowNaks = [primaryNakMl, ...secondaryNakMl];
+
+            // Fetch devotees matching any of tomorrow's nakshathrams
+            const placeholders = allTomorrowNaks.map(() => '?').join(',');
             const allDevotees = await db.getXbyY(
-                `SELECT name, nakshathram, whatsapp_number FROM nakshathra_pooja WHERE status = 'ACTIVE'`,
-                []
+                `SELECT name, nakshathram, whatsapp_number FROM nakshathra_pooja WHERE status = 'ACTIVE' AND nakshathram IN (${placeholders})`,
+                allTomorrowNaks
             );
 
-            // Group devotees by nakshathram (only those falling tomorrow)
-            const grouped = {};
-            for (const d of allDevotees) {
-                if (tomorrowNaks.includes(d.nakshathram)) {
-                    if (!grouped[d.nakshathram]) grouped[d.nakshathram] = [];
-                    grouped[d.nakshathram].push(d);
-                }
-            }
-
-            const totalDevotees = Object.values(grouped).reduce((s, arr) => s + arr.length, 0);
-            if (totalDevotees === 0) {
+            if (allDevotees.length === 0) {
                 await db.setXbyY('UPDATE reminder_runs SET sent_count = 0 WHERE slot = ? AND run_date = ?',
                     [slot, runDate]);
-                console.log(`[reminders] nakshathra_admin: no devotees for tomorrow's nakshathrams (${tomorrowIsoDate})`);
+                console.log(`[reminders] nakshathra_admin: no devotees for ${allTomorrowNaks.join(', ')} on ${tomorrowDate}`);
                 return;
+            }
+
+            // Group by nakshathram, preserving the order from panchangam
+            const grouped = {};
+            for (const nak of allTomorrowNaks) {
+                const matches = allDevotees.filter(d => d.nakshathram === nak);
+                if (matches.length > 0) grouped[nak] = matches;
             }
 
             // Format date: DD/MM/YYYY
-            const [ty, tm, td] = tomorrowIsoDate.split('-');
+            const [ty, tm, td] = tomorrowDate.split('-');
             const dateStr = `${td}/${tm}/${ty}`;
 
-            // Build the message in the exact requested format
+            // Build message in the specified Malayalam format
             const lines = [];
             lines.push('നാളത്തെ ജന്മ നക്ഷത്ര പൂജകൾ');
             lines.push(`തീയതി${dateStr} ${malWeekday}`);
-            lines.push(`${malMonth} ${malDay}, ${malYear}`);
+            lines.push(`${malMonth} ${malDayNum}, ${malYear}`);
             lines.push('');
 
-            for (const nak of tomorrowNaks) {
+            for (const nak of allTomorrowNaks) {
                 const items = grouped[nak];
                 if (!items || items.length === 0) continue;
 
@@ -277,19 +275,17 @@ function createReminderService(rawDb, { sendMessage, isConnected }) {
                 items.forEach((it, i) => {
                     const phone = (it.whatsapp_number || '').replace(/@s\.whatsapp\.net$/, '');
                     const name = it.name || 'അജ്ഞാത';
-                    // Pad: number + dot + spaces + name (left) + spaces + phone (right)
-                    lines.push(`${i + 1}      ${name}${' '.repeat(Math.max(1, 40 - name.length))}${phone}`);
+                    lines.push(`${i + 1}      ${name}${' '.repeat(Math.max(1, 44 - name.length))}${phone}`);
                 });
                 lines.push('');
             }
 
             const msgText = lines.join('\n');
-            const adminJid = ADMIN_NOTIFY_JID;
             try {
-                await sendMessage(adminJid, { type: 'text', text: msgText });
+                await sendMessage(ADMIN_NOTIFY_JID, { type: 'text', text: msgText });
                 await db.setXbyY('UPDATE reminder_runs SET sent_count = ? WHERE slot = ? AND run_date = ?',
-                    [totalDevotees, slot, runDate]);
-                console.log(`[reminders] nakshathra_admin sent: ${totalDevotees} devotees across ${Object.keys(grouped).length} nakshathram(s) for ${tomorrowIsoDate}`);
+                    [allDevotees.length, slot, isoDate(runDateObj)]);
+                console.log(`[reminders] nakshathra_admin sent: ${allDevotees.length} devotees for ${tomorrowDate} (nakshathrams: ${allTomorrowNaks.join(', ')})`);
             } catch (e) {
                 console.error('[reminders] nakshathra_admin send failed:', e.message);
             }
