@@ -6,7 +6,7 @@
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
     <title>
-        <%= site.brand_name %> | Vazhipadu Master
+        <%= site.brand_name %> | Devotees
     </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
@@ -46,7 +46,7 @@
                             Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link active fw-bold text-primary" href="/dashboard/vazhipadu"><i
+                        <a class="nav-link text-dark" href="/dashboard/vazhipadu"><i
                                 class="bi bi-flower1 me-2"></i> Vazhipadu Master</a>
                     </li>
                     <li class="nav-item">
@@ -58,14 +58,18 @@
                                 class="bi bi-stars me-2"></i> Nakshathra Poojas</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark" href="/dashboard/devotees"><i class="bi bi-people me-2"></i> Devotees</a>
+                        <a class="nav-link active fw-bold text-primary" href="/dashboard/devotees"><i
+                                class="bi bi-people me-2"></i> Devotees</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-dark" href="#"><i class="bi bi-list-check me-2"></i> Transactions</a>
+                        <a class="nav-link text-dark" href="/dashboard/whatsapp"><i class="bi bi-whatsapp me-2"></i> WhatsApp</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" href="/dashboard/transactions"><i class="bi bi-list-check me-2"></i> Transactions</a>
                     </li>
                     <% if (typeof userRole !== 'undefined' && (userRole === 'superadmin' || userRole === 'admin')) { %>
                     <li class="nav-item">
-                        <a class="nav-link text-dark" href="/dashboard/users"><i class="bi bi-people me-2"></i> User Management</a>
+                        <a class="nav-link text-dark" href="/dashboard/users"><i class="bi bi-person-gear me-2"></i> User Management</a>
                     </li>
                     <% } %>
                     <li class="nav-item mt-4">
@@ -78,10 +82,10 @@
             <!-- Main Content -->
             <div class="col-md-10 p-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4>Vazhipadu Master</h4>
-                    <% if (typeof userRole === 'undefined' || userRole === 'superadmin' || userRole === 'admin') { %>
+                    <h4>Devotees</h4>
+                    <% if (userRole === 'superadmin' || userRole === 'admin' || userRole === 'staff') { %>
                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
-                        <i class="bi bi-plus-lg"></i> Add Vazhipadu
+                        <i class="bi bi-plus-lg"></i> Add Devotee
                     </button>
                     <% } %>
                 </div>
@@ -100,10 +104,52 @@
                             </div>
                             <% } %>
 
-                                <!-- Items Table -->
+                                <p class="text-muted">
+                                    Devotees registered via WhatsApp. Phone number is the unique identifier.
+                                    Language preference is used for WhatsApp message localization.
+                                </p>
+
+                                <!-- Summary Cards -->
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-4">
+                                        <div class="card stat-card p-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="card-icon bg-primary text-white me-3"><i class="bi bi-people"></i></div>
+                                                <div>
+                                                    <h6 class="mb-0 text-muted">Total Devotees</h6>
+                                                    <h4 class="mb-0"><%= devotees.length %></h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card stat-card p-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="card-icon bg-success text-white me-3"><i class="bi bi-translate"></i></div>
+                                                <div>
+                                                    <h6 class="mb-0 text-muted">Languages</h6>
+                                                    <h4 class="mb-0"><%= devotees.filter(d => d.language).map(d => d.language).filter((v, i, a) => a.indexOf(v) === i).length %></h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card stat-card p-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="card-icon bg-info text-white me-3"><i class="bi bi-whatsapp"></i></div>
+                                                <div>
+                                                    <h6 class="mb-0 text-muted">WhatsApp Linked</h6>
+                                                    <h4 class="mb-0"><%= devotees.filter(d => d.whatsapp_name).length %></h4>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Devotees Table -->
                                 <div class="card stat-card">
                                     <div class="card-header bg-white py-3">
-                                        <h5 class="mb-0">All Vazhipadu Items</h5>
+                                        <h5 class="mb-0">All Devotees</h5>
                                     </div>
                                     <div class="card-body p-0">
                                         <div class="table-responsive">
@@ -111,53 +157,70 @@
                                                 <thead class="table-light">
                                                     <tr>
                                                         <th>ID</th>
-                                                        <th>Name</th>
-                                                        <th>Price (₹)</th>
-                                                        <th>Ageing (hours before booking)</th>
+                                                        <th>Phone Number</th>
+                                                        <th>WhatsApp Name</th>
+                                                        <th>Language</th>
+                                                        <th>Registered</th>
+                                                        <% if (userRole === 'superadmin' || userRole === 'admin') { %>
                                                         <th class="text-end">Actions</th>
+                                                        <% } %>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    <% if (items.length> 0) { %>
-                                                        <% items.forEach(item=> { %>
+                                                    <% if (devotees.length> 0) { %>
+                                                        <% devotees.forEach(d=> { %>
                                                             <tr>
                                                                 <td>
-                                                                    <%= item.id %>
+                                                                    <%= d.id %>
                                                                 </td>
                                                                 <td>
-                                                                    <%= item.name %>
-                                                                </td>
-                                                                <td>₹ <%= item.price %>
+                                                                    <span class="text-primary fw-bold">
+                                                                        <%= d.phone_number %>
+                                                                    </span>
                                                                 </td>
                                                                 <td>
-                                                                    <%= item.ageing %> hr
+                                                                    <%= d.whatsapp_name || '<span class="text-muted">—</span>' %>
                                                                 </td>
+                                                                <td>
+                                                                    <% if (d.language) { %>
+                                                                        <span class="badge bg-light text-dark border">
+                                                                            <%= d.language %>
+                                                                        </span>
+                                                                    <% } else { %>
+                                                                        <span class="text-muted">—</span>
+                                                                    <% } %>
+                                                                </td>
+                                                                <td>
+                                                                    <%= d.created_at %>
+                                                                </td>
+                                                                <% if (userRole === 'superadmin' || userRole === 'admin' || userRole === 'staff') { %>
                                                                 <td class="text-end">
-                                                                    <% if (typeof userRole !== 'undefined' && (userRole === 'superadmin' || userRole === 'admin')) { %>
                                                                     <button class="btn btn-sm btn-outline-primary"
                                                                         data-bs-toggle="modal"
-                                                                        data-bs-target="#editModal<%= item.id %>">
+                                                                        data-bs-target="#editModal<%= d.id %>">
                                                                         <i class="bi bi-pencil"></i> Edit
                                                                     </button>
-                                                                    <button class="btn btn-sm btn-outline-danger"
+                                                                    <% if (userRole === 'superadmin' || userRole === 'admin') { %>
+                                                                    <button class="btn btn-sm btn-outline-danger ms-1"
                                                                         data-bs-toggle="modal"
-                                                                        data-bs-target="#deleteModal<%= item.id %>">
+                                                                        data-bs-target="#deleteModal<%= d.id %>">
                                                                         <i class="bi bi-trash"></i> Delete
                                                                     </button>
                                                                     <% } %>
                                                                 </td>
+                                                                <% } %>
                                                             </tr>
 
                                                             <!-- Edit Modal -->
-                                                            <div class="modal fade" id="editModal<%= item.id %>"
+                                                            <div class="modal fade" id="editModal<%= d.id %>"
                                                                 tabindex="-1">
                                                                 <div class="modal-dialog">
                                                                     <div class="modal-content">
                                                                         <form
-                                                                            action="/dashboard/vazhipadu/update/<%= item.id %>"
+                                                                            action="/dashboard/devotees/update/<%= d.id %>"
                                                                             method="POST">
                                                                             <div class="modal-header">
-                                                                                <h5 class="modal-title">Edit Vazhipadu
+                                                                                <h5 class="modal-title">Edit Devotee
                                                                                 </h5>
                                                                                 <button type="button" class="btn-close"
                                                                                     data-bs-dismiss="modal"></button>
@@ -165,32 +228,30 @@
                                                                             <div class="modal-body">
                                                                                 <div class="mb-3">
                                                                                     <label
-                                                                                        class="form-label">Name</label>
+                                                                                        class="form-label">Phone Number *</label>
                                                                                     <input type="text"
-                                                                                        class="form-control" name="name"
-                                                                                        value="<%= item.name %>"
+                                                                                        class="form-control" name="phone_number"
+                                                                                        value="<%= d.phone_number %>"
                                                                                         required>
+                                                                                    <small class="text-muted">Digits with country
+                                                                                        code, e.g. 918907959595.</small>
                                                                                 </div>
                                                                                 <div class="mb-3">
-                                                                                    <label class="form-label">Price
-                                                                                        (₹)</label>
-                                                                                    <input type="number" step="0.01"
-                                                                                        min="0" class="form-control"
-                                                                                        name="price"
-                                                                                        value="<%= item.price %>"
-                                                                                        required>
+                                                                                    <label class="form-label">WhatsApp Name</label>
+                                                                                    <input type="text"
+                                                                                        class="form-control" name="whatsapp_name"
+                                                                                        value="<%= d.whatsapp_name || '' %>">
                                                                                 </div>
                                                                                 <div class="mb-3">
-                                                                                    <label class="form-label">Ageing
-                                                                                        (hours before booking
-                                                                                        allowed)</label>
-                                                                                    <input type="number" min="0"
-                                                                                        class="form-control"
-                                                                                        name="ageing"
-                                                                                        value="<%= item.ageing %>">
-                                                                                    <small class="text-muted">Minimum
-                                                                                        hours in advance a devotee can
-                                                                                        book this item.</small>
+                                                                                    <label class="form-label">Language</label>
+                                                                                    <select class="form-select" name="language">
+                                                                                        <option value="">— Not set —</option>
+                                                                                        <% languages.forEach(lang=> { %>
+                                                                                            <option value="<%= lang %>" <%=d.language===lang ? 'selected' : '' %>>
+                                                                                                <%= lang %>
+                                                                                            </option>
+                                                                                            <% }) %>
+                                                                                    </select>
                                                                                 </div>
                                                                             </div>
                                                                             <div class="modal-footer">
@@ -207,23 +268,24 @@
                                                             </div>
 
                                                             <!-- Delete Modal -->
-                                                            <div class="modal fade" id="deleteModal<%= item.id %>"
+                                                            <div class="modal fade" id="deleteModal<%= d.id %>"
                                                                 tabindex="-1">
                                                                 <div class="modal-dialog">
                                                                     <div class="modal-content">
                                                                         <form
-                                                                            action="/dashboard/vazhipadu/delete/<%= item.id %>"
+                                                                            action="/dashboard/devotees/delete/<%= d.id %>"
                                                                             method="POST">
                                                                             <div class="modal-header">
-                                                                                <h5 class="modal-title">Delete Vazhipadu
+                                                                                <h5 class="modal-title">Delete Devotee
                                                                                 </h5>
                                                                                 <button type="button" class="btn-close"
                                                                                     data-bs-dismiss="modal"></button>
                                                                             </div>
                                                                             <div class="modal-body">
-                                                                                Are you sure you want to delete <strong>
-                                                                                    <%= item.name %>
-                                                                                </strong>?
+                                                                                Are you sure you want to delete
+                                                                                devotee <strong>
+                                                                                    <%= d.phone_number %>
+                                                                                </strong><% if (d.whatsapp_name) { %> (<%= d.whatsapp_name %>)<% } %>?
                                                                             </div>
                                                                             <div class="modal-footer">
                                                                                 <button type="button"
@@ -239,9 +301,8 @@
                                                             <% }) %>
                                                                 <% } else { %>
                                                                     <tr>
-                                                                        <td colspan="5" class="text-center py-4">No
-                                                                            vazhipadu items found. Add one to get
-                                                                            started.</td>
+                                                                        <td colspan="<%= (userRole === 'superadmin' || userRole === 'admin' || userRole === 'staff') ? '6' : '5' %>" class="text-center py-4">No
+                                                                            devotees found.</td>
                                                                     </tr>
                                                                     <% } %>
                                                 </tbody>
@@ -257,29 +318,34 @@
     <div class="modal fade" id="addModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form action="/dashboard/vazhipadu/create" method="POST">
+                <form action="/dashboard/devotees/create" method="POST">
                     <div class="modal-header">
-                        <h5 class="modal-title">Add Vazhipadu</h5>
+                        <h5 class="modal-title">Add Devotee</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label class="form-label">Name</label>
-                            <input type="text" class="form-control" name="name" required>
+                            <label class="form-label">Phone Number *</label>
+                            <input type="text" class="form-control" name="phone_number" required placeholder="e.g. 918907959595">
+                            <small class="text-muted">Digits with country code, no spaces or dashes.</small>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Price (₹)</label>
-                            <input type="number" step="0.01" min="0" class="form-control" name="price" required>
+                            <label class="form-label">WhatsApp Name</label>
+                            <input type="text" class="form-control" name="whatsapp_name" placeholder="e.g. Ravi Kumar">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Ageing (hours before booking allowed)</label>
-                            <input type="number" min="0" class="form-control" name="ageing" value="0">
-                            <small class="text-muted">Minimum hours in advance a devotee can book this item.</small>
+                            <label class="form-label">Language</label>
+                            <select class="form-select" name="language">
+                                <option value="">— Not set —</option>
+                                <% languages.forEach(lang => { %>
+                                    <option value="<%= lang %>"><%= lang %></option>
+                                <% }) %>
+                            </select>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Add Item</button>
+                        <button type="submit" class="btn btn-primary">Add Devotee</button>
                     </div>
                 </form>
             </div>

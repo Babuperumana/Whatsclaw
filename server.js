@@ -63,6 +63,9 @@ app.use('/dashboard/specialdays', specialDaysRoutes);
 const nakshathraPoojaRoutes = require('./routes/nakshathrapooja');
 app.use('/dashboard/nakshathrapooja', nakshathraPoojaRoutes);
 
+const devoteesRoutes = require('./routes/devotees');
+app.use('/dashboard/devotees', devoteesRoutes);
+
 const whatsappRoutes = require('./routes/whatsapp');
 app.use('/dashboard/whatsapp', whatsappRoutes);
 
