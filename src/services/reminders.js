@@ -35,6 +35,13 @@ const MORNING_MIN = parseInt(process.env.REMINDER_MORNING_MIN || '30', 10);
 const PANCHANGAM_HOUR = parseInt(process.env.PANCHANGAM_HOUR || '16', 10);
 const PANCHANGAM_MIN = parseInt(process.env.PANCHANGAM_MIN || '50', 10);
 
+// Admin Nakshathra Reminder: sends tomorrow's nakshathra pooja details (all
+// active devotees, grouped by nakshathram) to the admin WhatsApp group at
+// 16:55 IST (4:55 PM). Runs after the Panchangam so admins get the full
+// picture in one flow.
+const NAKSHATHRA_ADMIN_HOUR = parseInt(process.env.NAKSHATHRA_ADMIN_HOUR || '16', 10);
+const NAKSHATHRA_ADMIN_MIN = parseInt(process.env.NAKSHATHRA_ADMIN_MIN || '55', 10);
+
 // Delay between individual sends, to avoid WhatsApp flagging the number for spam.
 const REMINDER_DELAY_MS = parseInt(process.env.REMINDER_DELAY_MS || '5000', 10);
 
@@ -182,6 +189,74 @@ function createReminderService(rawDb, { sendMessage, isConnected }) {
             return;
         }
 
+        // --- Admin Nakshathra Reminder: tomorrow's pooja list for the admin group ---
+        if (slot === 'nakshathra_admin') {
+            const tomorrow = isoDate(addDays(runDateObj, 1));
+            const nakshathraRows = await db.getXbyY(
+                `SELECT name, nakshathram, whatsapp_number FROM nakshathra_pooja WHERE status = 'ACTIVE'`,
+                []
+            );
+
+            const p = getPanchangam();
+            const due = [];
+            for (const r of nakshathraRows) {
+                try {
+                    const res = p && p.getNextNakshatraDates ? p.getNextNakshatraDates(r.nakshathram, 1) : [];
+                    if (res && res.length && res[0].date === tomorrow) {
+                        due.push({ name: r.name, nakshathram: r.nakshathram, phone: r.whatsapp_number });
+                    }
+                } catch (e) {
+                    // skip individual lookup failures
+                }
+            }
+
+            if (due.length === 0) {
+                await db.setXbyY('UPDATE reminder_runs SET sent_count = 0 WHERE slot = ? AND run_date = ?',
+                    [slot, runDate]);
+                console.log(`[reminders] nakshathra_admin: no poojas tomorrow (${tomorrow})`);
+                return;
+            }
+
+            // Build formatted message grouped by nakshathram — in Malayalam
+            const [ty, tm, td] = tomorrow.split('-');
+            const malDay = td;
+            const malMonth = tm;
+            const malYear = ty;
+
+            const lines = [];
+            lines.push('📅 *നാളെയുള്ള നക്ഷത്ര പൂജകൾ*');
+            lines.push(`തീയതി: ${malDay}/${malMonth}/${malYear}`);
+            lines.push(`ആകെ: ${due.length} പൂജ(കൾ)`);
+            lines.push('');
+
+            const grouped = {};
+            for (const d of due) {
+                if (!grouped[d.nakshathram]) grouped[d.nakshathram] = [];
+                grouped[d.nakshathram].push(d);
+            }
+
+            for (const [nak, items] of Object.entries(grouped)) {
+                lines.push(`⭐ ${nak} (${items.length})`);
+                items.forEach((it, i) => {
+                    const phone = it.phone ? it.phone.replace(/@s\.whatsapp\.net$/, '') : 'N/A';
+                    lines.push(`  ${i + 1}. ${it.name || 'അജ്ഞാത'} — 📱 ${phone}`);
+                });
+                lines.push('');
+            }
+
+            const msgText = lines.join('\n');
+            const adminJid = ADMIN_NOTIFY_JID;
+            try {
+                await sendMessage(adminJid, { type: 'text', text: msgText });
+                await db.setXbyY('UPDATE reminder_runs SET sent_count = ? WHERE slot = ? AND run_date = ?',
+                    [due.length, slot, runDate]);
+                console.log(`[reminders] nakshathra_admin sent: ${due.length} poojas for ${tomorrow}`);
+            } catch (e) {
+                console.error('[reminders] nakshathra_admin send failed:', e.message);
+            }
+            return;
+        }
+
         const isEvening = slot === 'evening';
         const targetDate = isEvening ? addDays(runDateObj, 1) : runDateObj;
         const dateLabel = dmyDate(targetDate);
@@ -255,17 +330,21 @@ function createReminderService(rawDb, { sendMessage, isConnected }) {
             const eveningMins = EVENING_HOUR * 60 + EVENING_MIN;
             const morningMins = MORNING_HOUR * 60 + MORNING_MIN;
             const panchangamMins = PANCHANGAM_HOUR * 60 + PANCHANGAM_MIN;
+            const nakshathraAdminMins = NAKSHATHRA_ADMIN_HOUR * 60 + NAKSHATHRA_ADMIN_MIN;
 
             // '>=' (not '==') so a slightly late boot still catches the day's batch;
             // the reminder_runs guard keeps it to one send per slot per day.
             if (mins >= morningMins && mins < eveningMins) {
                 await runSlot('morning', now);
             }
-            if (mins >= eveningMins) {
-                await runSlot('evening', now);
-            }
             if (mins >= panchangamMins) {
                 await runSlot('panchangam', now);
+            }
+            if (mins >= nakshathraAdminMins) {
+                await runSlot('nakshathra_admin', now);
+            }
+            if (mins >= eveningMins) {
+                await runSlot('evening', now);
             }
         } catch (e) {
             console.error('[reminders] tick error:', e.message);
@@ -310,7 +389,7 @@ function startReminderScheduler(rawDb, deps) {
         service.tick();                              // run once at boot
         setInterval(() => service.tick(), CHECK_INTERVAL_MS);
         const hh = (h, m) => `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-        console.log(`[reminders] scheduler started (morning ${hh(MORNING_HOUR, MORNING_MIN)}, evening ${hh(EVENING_HOUR, EVENING_MIN)}, panchangam ${hh(PANCHANGAM_HOUR, PANCHANGAM_MIN)} IST)`);
+        console.log(`[reminders] scheduler started (morning ${hh(MORNING_HOUR, MORNING_MIN)}, panchangam ${hh(PANCHANGAM_HOUR, PANCHANGAM_MIN)}, nakshathra_admin ${hh(NAKSHATHRA_ADMIN_HOUR, NAKSHATHRA_ADMIN_MIN)}, evening ${hh(EVENING_HOUR, EVENING_MIN)} IST)`);
     });
     return service;
 }
