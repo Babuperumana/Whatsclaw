@@ -47,6 +47,37 @@ const broadcastStatus = {
 // Delay between devotee sends, to avoid WhatsApp flagging the number for spam.
 const BROADCAST_DELAY_MS = 15000;
 
+// --- Presence simulation (human-like behavior to reduce ban risk) ---
+// "composing" = typing indicator; "recording" = looks like a voice note is being
+// recorded. WhatsApp shows these in the chat, making automated sends look more like
+// a real person operating the device.
+const TYPING_MIN_MS = parseInt(process.env.TYPING_MIN_MS || '1500', 10);
+const TYPING_MAX_MS = parseInt(process.env.TYPING_MAX_MS || '3000', 10);
+const RECORDING_MS = parseInt(process.env.RECORDING_MS || '1500', 10);
+
+function randomTypingDelay() {
+    return TYPING_MIN_MS + Math.floor(Math.random() * (TYPING_MAX_MS - TYPING_MIN_MS));
+}
+
+// Show composing (typing) then recording then paused around a single send.
+// Skips the presence dance for group/admin targets since those aren't personal 1:1 chats.
+async function sendWithPresence(sock, jid, content) {
+    const isPhone = jid.endsWith('@s.whatsapp.net');
+    if (isPhone) {
+        try { await sock.sendPresenceUpdate('composing', jid); } catch (_) { /* best-effort */ }
+        await new Promise(r => setTimeout(r, randomTypingDelay()));
+    }
+    const result = await sock.sendMessage(jid, buildContent(content));
+    if (isPhone) {
+        try {
+            await sock.sendPresenceUpdate('recording', jid);
+            await new Promise(r => setTimeout(r, RECORDING_MS));
+            await sock.sendPresenceUpdate('paused', jid);
+        } catch (_) { /* best-effort */ }
+    }
+    return result;
+}
+
 function getWhatsAppStatus() {
     return botStatus;
 }
@@ -101,8 +132,9 @@ function buildContent(content) {
 }
 
 // Send a single message to one recipient (number, group, or newsletter).
-// Tracks failures on the devotee row so repeatedly unreachable numbers are
-// eventually skipped, reducing wasted sends and spam signals.
+// Shows "typing" then "recording" presence before sending to mimic a real
+// person operating the device. Tracks failures on the devotee row so
+// repeatedly unreachable numbers are eventually skipped.
 async function sendWhatsAppMessage(target, content) {
     ensureConnected();
     const jid = toJid(target);
@@ -112,7 +144,7 @@ async function sendWhatsAppMessage(target, content) {
     const digits = isPhone ? jid.split('@')[0] : null;
 
     try {
-        const result = await currentSock.sendMessage(jid, buildContent(content));
+        const result = await sendWithPresence(currentSock, jid, buildContent(content));
         if (isPhone && digits) {
             await markSendResult(digits, true);
         }
@@ -205,7 +237,7 @@ async function broadcastToDevotees(content) {
                 break;
             }
             try {
-                await currentSock.sendMessage(toJid(devotees[i].phone_number), buildContent(content));
+                await sendWithPresence(currentSock, toJid(devotees[i].phone_number), buildContent(content));
                 broadcastStatus.sent++;
             } catch (err) {
                 broadcastStatus.failed++;

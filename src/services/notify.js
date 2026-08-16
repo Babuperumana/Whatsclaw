@@ -1,6 +1,7 @@
 // Sends full booking/donation details to the temple admin number.
 // Serializes sends with a minimum gap to avoid WhatsApp flagging the group
-// for rapid-fire messages. Uses a simple in-memory last-send timestamp.
+// for rapid-fire messages. Uses presence simulation (composing + recording)
+// to make admin messages look like they come from a person.
 
 const { ADMIN_NOTIFY_JID } = require('../config');
 
@@ -13,9 +14,20 @@ async function waitForAdminSlot() {
     if (wait > 0) await new Promise(r => setTimeout(r, wait));
 }
 
+async function simulatePresence(sock, jid) {
+    try {
+        await sock.sendPresenceUpdate('composing', jid);
+        await new Promise(r => setTimeout(r, 1500 + Math.floor(Math.random() * 1500)));
+        await sock.sendPresenceUpdate('recording', jid);
+        await new Promise(r => setTimeout(r, 1500));
+        await sock.sendPresenceUpdate('paused', jid);
+    } catch (_) { /* best-effort */ }
+}
+
 async function notifyAdmin(sock, text) {
     try {
         await waitForAdminSlot();
+        await simulatePresence(sock, ADMIN_NOTIFY_JID);
         await sock.sendMessage(ADMIN_NOTIFY_JID, { text });
         lastAdminSend = Date.now();
     } catch (err) {
