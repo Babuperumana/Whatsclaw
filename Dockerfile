@@ -17,7 +17,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 # cache-bust: 2026-08-09-v3
 ADD cache-bust.txt /tmp/cache-bust.txt
-RUN npm_config_build_from_source=sqlite3 npm ci --omit=dev
+RUN npm ci --omit=dev
 
 # Application source (adds the cache-bust marker above + everything else).
 COPY . .
