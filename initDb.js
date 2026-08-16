@@ -264,6 +264,8 @@ CREATE TABLE devotees (
   phone_number TEXT NOT NULL UNIQUE,
   whatsapp_name TEXT,
   language TEXT, -- 'Malayalam', 'English', 'Tamil', 'Hindi'
+  opted_out INTEGER DEFAULT 0, -- 1 = devotee sent STOP; skip all automated sends
+  send_failures INTEGER DEFAULT 0, -- consecutive send failures; auto-skip when >= 5
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

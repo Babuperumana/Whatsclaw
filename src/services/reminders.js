@@ -43,7 +43,12 @@ const NAKSHATHRA_ADMIN_HOUR = parseInt(process.env.NAKSHATHRA_ADMIN_HOUR || '16'
 const NAKSHATHRA_ADMIN_MIN = parseInt(process.env.NAKSHATHRA_ADMIN_MIN || '55', 10);
 
 // Delay between individual sends, to avoid WhatsApp flagging the number for spam.
-const REMINDER_DELAY_MS = parseInt(process.env.REMINDER_DELAY_MS || '5000', 10);
+// Increased to 15s default for ban safety. Override via REMINDER_DELAY_MS env.
+const REMINDER_DELAY_MS = parseInt(process.env.REMINDER_DELAY_MS || '15000', 10);
+
+// Hard cap on sends per reminder slot (morning/evening) to prevent runaway spam
+// even with many bookings. Override via REMINDER_MAX_SENDS_PER_SLOT env.
+const MAX_SENDS_PER_SLOT = parseInt(process.env.REMINDER_MAX_SENDS_PER_SLOT || '100', 10);
 
 const CHECK_INTERVAL_MS = 60 * 1000;
 
@@ -116,23 +121,32 @@ function createReminderService(rawDb, { sendMessage, isConnected }) {
     }
 
     // Vazhipadu bookings performing on the given IST date (Date object).
+    // Excludes opted-out and failing-devotee numbers.
     async function vazhipaduFor(dateObj) {
         return db.getXbyY(
-            `SELECT phone_number, vazhipadu_name, devotee_name, nakshathram, performing_date
-               FROM vazhipadu_bookings
-              WHERE performing_date = ? AND status = 'CONFIRMED'`,
+            `SELECT vb.phone_number, vb.vazhipadu_name, vb.devotee_name, vb.nakshathram, vb.performing_date
+               FROM vazhipadu_bookings vb
+               JOIN devotees d ON d.phone_number = vb.phone_number
+              WHERE vb.performing_date = ? AND vb.status = 'CONFIRMED'
+                AND COALESCE(d.opted_out, 0) = 0
+                AND COALESCE(d.send_failures, 0) < 5`,
             [dmyDate(dateObj)]
         );
     }
 
     // Active nakshathra poojas whose next occurrence is the given IST date.
+    // Excludes opted-out and failing-devotee numbers.
     async function nakshathraFor(dateObj) {
         const p = getPanchangam();
         if (!p || typeof p.getNextNakshatraDates !== 'function') return [];
         const targetIso = isoDate(dateObj);
         const rows = await db.getXbyY(
-            `SELECT name, nakshathram, whatsapp_number
-               FROM nakshathra_pooja WHERE status = 'ACTIVE'`,
+            `SELECT np.name, np.nakshathram, np.whatsapp_number
+               FROM nakshathra_pooja np
+               JOIN devotees d ON d.phone_number = np.whatsapp_number
+              WHERE np.status = 'ACTIVE'
+                AND COALESCE(d.opted_out, 0) = 0
+                AND COALESCE(d.send_failures, 0) < 5`,
             []
         );
         const due = [];
@@ -279,7 +293,7 @@ function createReminderService(rawDb, { sendMessage, isConnected }) {
 
         let sent = 0;
         const total = vazhipadus.length + nakshathras.length;
-        console.log(`[reminders] ${slot} for ${dateLabel}: ${vazhipadus.length} vazhipadu + ${nakshathras.length} nakshathra`);
+        console.log(`[reminders] ${slot} for ${dateLabel}: ${vazhipadus.length} vazhipadu + ${nakshathras.length} nakshathra (cap ${MAX_SENDS_PER_SLOT})`);
 
         // Vazhipadu reminders – group by phone so one message per person covers all their vazhipadus.
         const groups = new Map();
@@ -290,6 +304,10 @@ function createReminderService(rawDb, { sendMessage, isConnected }) {
         let sentCount = 0;
         for (const [phone, items] of groups) {
             if (!isConnected()) { console.warn('[reminders] connection lost mid-run; stopping'); break; }
+            if (sentCount >= MAX_SENDS_PER_SLOT) {
+                console.warn(`[reminders] ${slot} hit daily cap of ${MAX_SENDS_PER_SLOT}; skipping remaining recipients`);
+                break;
+            }
             const lang = langFor(langMap, phone);
             const name = (items[0].devotee_name || '').trim() || 'Devotee';
             if (items.length === 1) {
@@ -311,6 +329,10 @@ function createReminderService(rawDb, { sendMessage, isConnected }) {
         // Nakshathra pooja reminders.
         for (let i = 0; i < nakshathras.length; i++) {
             if (!isConnected()) { console.warn('[reminders] connection lost mid-run; stopping'); break; }
+            if (sentCount >= MAX_SENDS_PER_SLOT) {
+                console.warn(`[reminders] ${slot} hit daily cap of ${MAX_SENDS_PER_SLOT}; skipping remaining recipients`);
+                break;
+            }
             const r = nakshathras[i];
             const lang = langFor(langMap, r.whatsapp_number);
             const text = t(lang, nKey, {

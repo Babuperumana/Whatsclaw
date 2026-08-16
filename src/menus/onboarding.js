@@ -85,7 +85,17 @@ module.exports = {
         session.language = picked.name;
         session.state = STATES.IDLE;
         session.isSettings = false;
-        await sock.sendMessage(jid, { text: t(picked.name, 'onboarding.language_set', { name: picked.name }) });
+
+        // Send a welcome message that includes the opt-out info.
+        const optOutInfo = {
+            'Malayalam': '\n\n💡 ഓട്ടോമാറ്റഡ് അറിയിപ്പുകൾ നിര്‍ത്താൻ "STOP" ടൈപ്പ് ചെയ്യുക.',
+            'Tamil': '\n\n💡 ஆட்டோமேட்டிக் ஹட்சலை நிறுத்த "STOP" ஐ அழுத்தவும்.',
+            'Hindi': '\n\n💡 ऑटोमेटिक रिमाइंडर बंद करने के लिए "STOP" टाइप करें.',
+            'English': '\n\n💡 Type "STOP" anytime to disable automated reminders.'
+        };
+
+        const welcome = t(picked.name, 'onboarding.language_set', { name: picked.name });
+        await sock.sendMessage(jid, { text: welcome + (optOutInfo[picked.name] || optOutInfo['English']) });
         return picked;
     }
 };
