@@ -17,7 +17,12 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 # cache-bust: 2026-08-09-v3
 ADD cache-bust.txt /tmp/cache-bust.txt
-RUN npm ci --omit=dev
+# Install C/C++ toolchain for native module builds (sqlite3, bcrypt) on ARM64 hosts
+# where prebuilt binaries may not be available for the correct architecture.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3 make g++ \
+    && rm -rf /var/lib/apt/lists/*
+RUN npm_config_build_from_source=sqlite3,bcrypt npm ci --omit=dev
 
 # Application source (adds the cache-bust marker above + everything else).
 COPY . .
